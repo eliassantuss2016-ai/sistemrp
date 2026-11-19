@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teste Firestore - sistem-rp</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; background: #111; color: #eee; }
+    input, button { padding: 8px 12px; margin: 4px 0; border-radius: 6px; border: 1px solid #444; }
+    input { background: #1c1c1c; color: #fff; }
+    button { background: #2563eb; color: #fff; cursor: pointer; font-weight: bold; }
+    button.sec { background: #333; }
+    .card { background: #1a1a1a; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #2b2b2b; }
+    pre { background: #0b0b0b; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h2>Teste rápido - Firestore (120 dias)</h2>
+
+  <div class="card">
+    <input id="tituloInput" type="text" placeholder="Ex: Gestão / Registro de teste" />
+    <button id="btnCriar">Criar entrada (120 dias)</button>
+    <button id="btnMorto" class="sec">Ver arquivo morto</button>
+  </div>
+
+  <h3>Gestão Ativa (tempo real)</h3>
+  <pre id="saidaAtiva">Carregando...</pre>
+
+  <h3>Arquivo Morto (sob demanda)</h3>
+  <pre id="saidaMorto">Clique em "Ver arquivo morto" para consultar.</pre>
+
+  <script type="module">
+    import {
+      criarEntradaGestao,
+      escutarGestaoAtiva,
+      listarArquivoMorto
+    } from "./firebase.js";
+
+    const COLECAO = "gestao_registros";
+    const tituloInput = document.getElementById("tituloInput");
+    const btnCriar = document.getElementById("btnCriar");
+    const btnMorto = document.getElementById("btnMorto");
+    const saidaAtiva = document.getElementById("saidaAtiva");
+    const saidaMorto = document.getElementById("saidaMorto");
+
+    btnCriar.addEventListener("click", async () => {
+      const titulo = tituloInput.value.trim() || "Registro sem título";
+      btnCriar.disabled = true;
+      const res = await criarEntradaGestao(COLECAO, { titulo });
+      btnCriar.disabled = false;
+
+      if (res.ok) {
+        tituloInput.value = "";
+      } else {
+        alert("Erro ao salvar: " + res.erro);
+      }
+    });
+
+    btnMorto.addEventListener("click", async () => {
+      saidaMorto.textContent = "Buscando arquivo morto...";
+      const mortos = await listarArquivoMorto(COLECAO);
+      saidaMorto.textContent = JSON.stringify(mortos, null, 2);
+    });
+
+    escutarGestaoAtiva(COLECAO, (lista) => {
+      const resumo = lista.map((item) => ({
+        id: item.id,
+        titulo: item.titulo,
+        diasRestantes: item.diasRestantes,
+        criadoEm: item.dataCriacaoBR,
+        expiraEm: item.dataFimBR
+      }));
+      saidaAtiva.textContent = JSON.stringify(resumo, null, 2);
+    });
+  </script>
+</body>
+</html>
