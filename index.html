@@ -1,0 +1,3864 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sistema Integrado Multi-Corporação RP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --corp-primary: #16a34a;
+      --corp-primary-hover: #22c55e;
+      --corp-accent-text: #4ade80;
+      --corp-border: rgba(34, 197, 94, 0.35);
+      --corp-bg-soft: rgba(34, 197, 94, 0.12);
+    }
+
+    body[data-theme="verde"] {
+      --corp-primary: #16a34a;
+      --corp-primary-hover: #22c55e;
+      --corp-accent-text: #4ade80;
+      --corp-border: rgba(34, 197, 94, 0.4);
+      --corp-bg-soft: rgba(34, 197, 94, 0.14);
+    }
+
+    body[data-theme="vermelho"] {
+      --corp-primary: #dc2626;
+      --corp-primary-hover: #ef4444;
+      --corp-accent-text: #f87171;
+      --corp-border: rgba(239, 68, 68, 0.4);
+      --corp-bg-soft: rgba(239, 68, 68, 0.14);
+    }
+
+    body[data-theme="azul"] {
+      --corp-primary: #2563eb;
+      --corp-primary-hover: #3b82f6;
+      --corp-accent-text: #60a5fa;
+      --corp-border: rgba(59, 130, 246, 0.4);
+      --corp-bg-soft: rgba(59, 130, 246, 0.14);
+    }
+
+    .theme-btn-primary {
+      background-color: var(--corp-primary);
+      color: #ffffff;
+    }
+    .theme-btn-primary:hover {
+      background-color: var(--corp-primary-hover);
+    }
+    .theme-accent-text {
+      color: var(--corp-accent-text);
+    }
+    .theme-border {
+      border-color: var(--corp-border);
+    }
+    .theme-soft-bg {
+      background-color: var(--corp-bg-soft);
+    }
+
+    .scrollbar-thin::-webkit-scrollbar { width: 5px; height: 5px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #0f172a; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+
+    .box-presenca-neutro   { background-color: #1e293b; color: #94a3b8; border: 1px dashed #475569; }
+    .box-presenca-verde    { background-color: #22c55e; color: #ffffff; }
+    .box-presenca-amarelo  { background-color: #eab308; color: #000000; }
+    .box-presenca-vermelho { background-color: #ef4444; color: #ffffff; }
+    .box-presenca-azul     { background-color: #3b82f6; color: #ffffff; }
+    .box-presenca-preto    { background-color: #000000; color: #ffffff; border: 1px solid #475569; }
+  </style>
+</head>
+<body data-theme="verde" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased scrollbar-thin overflow-x-hidden">
+
+  <!-- 1. TELA INICIAL -->
+  <div id="portal-inicial" class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div class="max-w-3xl w-full space-y-5">
+
+      <div id="barra-comando-topo" class="hidden flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900/70 border border-slate-800/80 text-xs">
+        <span id="badge-corp-escolhida" class="font-mono text-[11px] text-slate-400">Corporação selecionada</span>
+        <div class="flex items-center gap-3">
+          <a href="./teste-firestore.html" class="text-[11px] font-mono text-slate-400 hover:text-white underline">Teste DB</a>
+          <button type="button" onclick="abrirFormularioLogin('comando')" class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 hover:text-amber-400 transition px-2 py-1 rounded-lg hover:bg-slate-800/60">
+            <i data-lucide="crown" class="w-3.5 h-3.5 text-amber-500/80"></i>
+            <span>Comando / Alto Comando</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="text-center space-y-2">
+        <div class="inline-flex theme-soft-bg p-3 rounded-2xl theme-accent-text border theme-border transition-colors">
+          <i data-lucide="shield" class="w-8 h-8 sm:w-9 sm:h-9"></i>
+        </div>
+        <h1 class="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
+          CENTRAL INTEGRADA <span class="theme-accent-text transition-colors">• GESTÃO RP</span>
+        </h1>
+        <p id="subtitulo-portal" class="text-xs sm:text-sm text-slate-400">Escolha a corporação para continuar</p>
+      </div>
+
+      <div class="bg-slate-900/90 border theme-border rounded-2xl p-4 sm:p-5 shadow-xl transition-colors space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            Selecione a Corporação
+          </label>
+          <button type="button" id="btn-trocar-corp" onclick="resetarSelecaoCorporacao()" class="hidden text-[11px] text-slate-400 hover:text-white underline">
+            Trocar corporação
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <button type="button" data-corp="EXERCITO" onclick="selecionarCorporacaoInicial('EXERCITO')"
+            class="corp-btn px-4 py-3.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-950 text-slate-300 hover:border-emerald-500/60 transition flex items-center justify-center gap-2">
+            🛡️ Exército (EB)
+          </button>
+          <button type="button" data-corp="SIST_HP" onclick="selecionarCorporacaoInicial('SIST_HP')"
+            class="corp-btn px-4 py-3.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-950 text-slate-300 hover:border-red-500/60 transition flex items-center justify-center gap-2">
+            🏥 Hospital (HP)
+          </button>
+          <button type="button" data-corp="FLPD" onclick="selecionarCorporacaoInicial('FLPD')"
+            class="corp-btn px-4 py-3.5 rounded-xl text-xs font-bold border border-slate-700 bg-slate-950 text-slate-300 hover:border-blue-500/60 transition flex items-center justify-center gap-2">
+            👮 Polícia (DP)
+          </button>
+        </div>
+      </div>
+
+      <div id="area-efetivo-portal" class="hidden space-y-4">
+        <div id="card-acesso-efetivo" class="bg-slate-900/95 border-2 theme-border rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-2xl theme-soft-bg border theme-border flex items-center justify-center theme-accent-text shrink-0">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <span class="text-[10px] font-mono font-bold uppercase tracking-wider theme-accent-text">Área Operacional</span>
+                <h2 class="text-base sm:text-lg font-bold text-white">EFETIVO (MEMBRO)</h2>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+              <button type="button" id="btn-modo-login-efetivo" onclick="alternarModoEfetivoPortal('login')" class="px-3 py-1.5 rounded-lg text-xs font-bold theme-btn-primary">
+                Entrar / Bater Ponto
+              </button>
+              <button type="button" id="btn-modo-inscricao-efetivo" onclick="alternarModoEfetivoPortal('inscricao')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">
+                Inscrição na Corporação
+              </button>
+            </div>
+          </div>
+
+          <form id="form-login-rapido-efetivo" onsubmit="logarEfetivoExistente(event)" class="space-y-3">
+            <p class="text-xs text-slate-400">
+              O <b>Token individual de 10 caracteres</b> é a chave única obrigatória para entrar. O <b>Nome no RP</b> serve como formalidade de identificação (se alguém digitar nome diferente ou com erro gráfico, fica registrado na auditoria para conferência).
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Nome no RP (Formalidade)</label>
+                <input type="text" id="login-rapido-nome" placeholder="Ex: ELIAS MARINHO"
+                  class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm uppercase">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Token Individual (10 caracteres) *</label>
+                <input type="text" id="login-rapido-token" maxlength="10" minlength="10" placeholder="Ex: K9M4P2X7R1" required
+                  class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm font-mono uppercase tracking-widest">
+              </div>
+            </div>
+            <button type="submit" class="w-full py-3 theme-btn-primary font-bold rounded-xl text-sm transition">
+              Entrar com Token (10 Caracteres)
+            </button>
+          </form>
+
+          <form id="form-inscricao-efetivo" onsubmit="inscreverCandidatoCorporacao(event)" class="hidden space-y-3">
+            <p class="text-xs text-slate-400">
+              Preencha sua ficha de <b>inscrição na corporação</b>. Ao enviar, será gerado seu <b>Token individual e único de 10 caracteres</b> para login na área de efetivo (ciclo de gestão de <b>120 dias</b>).
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Patente / Cargo Pretendido *</label>
+                <select id="insc-efetivo-patente" required class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm"></select>
+              </div>
+              <div>
+                <label id="label-insc-setor" class="block text-xs font-semibold text-slate-400 uppercase mb-1">Setor / QTH *</label>
+                <input type="text" id="insc-efetivo-setor" placeholder="Ex: APM / MANHÃ" required class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Nome no RP *</label>
+                <input type="text" id="insc-efetivo-nome" placeholder="Ex: ELIAS MARINHO" required class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Discord (@) *</label>
+                <input type="text" id="insc-efetivo-discord" placeholder="Ex: @oeliasmarinho" required class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Veículo Particular (Opcional - para Macros)</label>
+              <input type="text" id="insc-efetivo-veiculo" placeholder="Ex: CIVIC PRETO" class="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm">
+            </div>
+            <button type="submit" class="w-full py-3 theme-btn-primary font-bold rounded-xl text-sm transition">
+              Enviar Inscrição e Gerar Token de 10 Caracteres
+            </button>
+
+            <div id="box-token-recem-gerado" class="hidden p-4 rounded-2xl bg-slate-950 border theme-border space-y-2">
+              <div class="text-[11px] font-bold uppercase theme-accent-text">Token Individual Gerado (10 Caracteres)</div>
+              <div class="flex items-center justify-between gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5">
+                <span id="valor-token-recem-gerado" class="font-mono text-base sm:text-lg font-black tracking-widest text-white">----------</span>
+                <button type="button" onclick="copiarTextoToken(document.getElementById('valor-token-recem-gerado').textContent)"
+                  class="px-3 py-1.5 theme-btn-primary text-xs font-bold rounded-lg shrink-0">
+                  Copiar Token
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400">Guarde ou copie este token para fazer login na área de efetivo.</p>
+            </div>
+          </form>
+        </div>
+
+        <div id="form-box-comando" class="hidden max-w-md mx-auto bg-slate-900 border border-amber-500/30 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="font-bold text-white text-base">Login Alto Comando</h3>
+            <button type="button" onclick="voltarParaEfetivoPortal()" class="text-xs text-slate-400 hover:text-white bg-slate-800 px-2.5 py-1 rounded-lg">Voltar ao Efetivo</button>
+          </div>
+          <p id="dica-modelo-comando" class="text-[11px] text-slate-400 bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 font-mono">
+            Modelo individual por pessoa: <span class="text-amber-400">000...</span> (ex: 001...). Cada combinação só pode ser usada por uma pessoa.
+          </p>
+          <form onsubmit="autenticarComando(event)" class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Usuário / Nome do Comando *</label>
+              <input type="text" id="login-cmd-usuario" placeholder="Ex: KARTER" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Chave / Senha Individual *</label>
+              <input type="text" id="login-cmd-senha" placeholder="Ex: 001HPAP1 / 001DPAP2 / 001EBAP3" required class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm font-mono uppercase">
+            </div>
+            <button type="submit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-sm transition">
+              Acessar Comando
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. SISTEMA PRINCIPAL -->
+  <div id="app-container" class="hidden flex-1 flex flex-col">
+
+    <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div class="flex items-center justify-between sm:justify-start gap-2.5">
+          <div class="flex items-center gap-2.5">
+            <div class="theme-soft-bg p-2 rounded-xl theme-accent-text border theme-border shrink-0">
+              <i data-lucide="shield" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1 id="header-corp-titulo" class="font-bold text-sm sm:text-lg text-white truncate">EXÉRCITO DE MESA</h1>
+                <span class="inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-950 border border-slate-800">
+                  <span id="net-dot" class="w-2 h-2 rounded-full bg-red-500"></span>
+                  <span id="net-text">Offline</span>
+                </span>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-950 border border-slate-800 theme-accent-text">
+                  Ciclo 120d
+                </span>
+              </div>
+              <p id="header-subtitulo" class="text-[11px] text-slate-400 truncate">Painel Operacional Persistente • Firestore sistem-rp</p>
+            </div>
+          </div>
+
+          <button type="button" onclick="efetuarLogout()" class="sm:hidden px-2.5 py-1.5 bg-slate-800 text-slate-300 hover:text-red-400 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sair
+          </button>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-3 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 shrink-0">
+          <div class="text-right">
+            <div id="user-display-name" class="text-xs font-bold text-white">---</div>
+            <div id="user-display-role" class="text-[10px] font-mono theme-accent-text">---</div>
+          </div>
+          <button type="button" onclick="efetuarLogout()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-red-600/20 text-slate-300 hover:text-red-400 rounded-lg transition text-xs font-bold flex items-center gap-1">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sair
+          </button>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-800 bg-slate-950 px-2 sm:px-4 py-2">
+        <nav class="max-w-7xl mx-auto flex items-center gap-1.5 overflow-x-auto scrollbar-thin pb-0.5">
+          <button type="button" onclick="switchTab('efetivo')" id="tab-btn-efetivo" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold theme-btn-primary whitespace-nowrap shrink-0">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i> <span id="label-tab-efetivo">Efetivo & Balanço</span>
+          </button>
+          <button type="button" onclick="switchTab('desempenho')" id="tab-btn-desempenho" class="tab-btn admin-only hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i> Desempenho Geral
+          </button>
+          <button type="button" onclick="switchTab('ponto')" id="tab-btn-ponto" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="clock" class="w-3.5 h-3.5"></i> <span id="label-tab-ponto">Ponto & Turnos</span>
+          </button>
+          <button type="button" onclick="switchTab('candidatos')" id="tab-btn-candidatos" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Candidatos <span id="badge-qtd-candidatos" class="px-1.5 py-0.2 rounded-full bg-slate-800 text-[10px] font-mono">0</span>
+          </button>
+          <button type="button" onclick="switchTab('macros')" id="tab-btn-macros" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="terminal" class="w-3.5 h-3.5"></i> Minhas Macros
+          </button>
+          <button type="button" onclick="switchTab('eventos')" id="tab-btn-eventos" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i> Justificativas
+          </button>
+          <button type="button" onclick="switchTab('ferias')" id="tab-btn-ferias" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="palmtree" class="w-3.5 h-3.5"></i> Férias
+          </button>
+          <button type="button" onclick="switchTab('avisos')" id="tab-btn-avisos" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="megaphone" class="w-3.5 h-3.5"></i> Central de Avisos
+          </button>
+          <button type="button" onclick="switchTab('auditoria')" id="tab-btn-auditoria" class="tab-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Registro de Acesso
+          </button>
+          <button type="button" onclick="switchTab('exonerados')" id="tab-btn-exonerados" class="tab-btn admin-only hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap shrink-0">
+            <i data-lucide="user-x" class="w-3.5 h-3.5"></i> Limbo / Exonerados
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5 md:p-6 space-y-5">
+
+      <!-- ABA 1: EFETIVO, BALANÇO, DOCUMENTO POR PERÍODO -->
+      <div id="tab-efetivo" class="tab-content space-y-5">
+
+        <div class="admin-only hidden space-y-4">
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-3.5">
+              <span class="text-slate-400 text-[10px] font-bold uppercase">Efetivo Ativo</span>
+              <div id="stat-total" class="text-xl sm:text-2xl font-bold text-white mt-1">0</div>
+              <span class="text-[10px] theme-accent-text">Na corporação</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-3.5">
+              <span class="text-slate-400 text-[10px] font-bold uppercase">Em Serviço (QRV)</span>
+              <div id="stat-em-turno" class="text-xl sm:text-2xl font-bold text-cyan-400 mt-1">0</div>
+              <span class="text-[10px] text-slate-500">Ponto aberto agora</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-3.5">
+              <span class="text-slate-400 text-[10px] font-bold uppercase">Presentes (🟢)</span>
+              <div id="stat-presentes" class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">0</div>
+              <span class="text-[10px] text-slate-500">Com presença</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-3.5">
+              <span class="text-slate-400 text-[10px] font-bold uppercase">Justificados (🟡)</span>
+              <div id="stat-justificados" class="text-xl sm:text-2xl font-bold text-yellow-400 mt-1">0</div>
+              <span class="text-[10px] text-slate-500">Ausência avisada</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-3.5">
+              <span class="text-slate-400 text-[10px] font-bold uppercase">Férias (🔵)</span>
+              <div id="stat-ferias" class="text-xl sm:text-2xl font-bold text-blue-400 mt-1">0</div>
+              <span class="text-[10px] text-slate-500">De licença</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-3.5">
+              <span class="text-slate-400 text-[10px] font-bold uppercase">No Limbo (⚫)</span>
+              <div id="stat-exonerados" class="text-xl sm:text-2xl font-bold text-slate-400 mt-1">0</div>
+              <span class="text-[10px] text-slate-500">Exonerados</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <h3 id="titulo-resumo-qth" class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2.5">Distribuição por Setor / QTH (Clique para filtrar)</h3>
+              <div id="resumo-por-qth" class="flex flex-wrap gap-2"></div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2.5">Distribuição por Patente / Cargo (Clique para filtrar)</h3>
+              <div id="resumo-por-patente" class="flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+
+          <!-- GERADOR DE DOCUMENTO DE PRESENÇA / FALTA POR PERÍODO -->
+          <div class="bg-slate-900 border theme-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <div>
+                <h2 class="font-bold text-white text-sm sm:text-base flex items-center gap-2">
+                  <i data-lucide="file-text" class="w-4 h-4 theme-accent-text"></i>
+                  Documento de Presença e Falta por Período (Data X até Data Y)
+                </h2>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  Calcula o intervalo <b>Data X até Data Y</b> e também considera <b>hoje</b> ou o <b>período anterior</b> quando a última/recente entrada de ponto ou evento tiver sido iniciada ou cumprida.
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data Inicial (Data X) *</label>
+                <input type="date" id="rel-data-inicio" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data Final (Data Y) *</label>
+                <input type="date" id="rel-data-fim" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Escopo do Documento</label>
+                <select id="rel-escopo" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+                  <option value="TODOS">Todo o Efetivo Ativo</option>
+                  <option value="FALTOSOS">Apenas com Falta / Sem Presença</option>
+                  <option value="PRESENTES">Apenas com Presença / Turno</option>
+                </select>
+              </div>
+              <button type="button" onclick="gerarDocumentoPeriodo()" class="w-full py-2 px-4 theme-btn-primary font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                <i data-lucide="calculator" class="w-3.5 h-3.5"></i> Calcular e Gerar Documento
+              </button>
+            </div>
+
+            <div id="box-documento-periodo" class="hidden space-y-3 pt-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span id="resumo-periodo-texto" class="text-xs font-mono theme-accent-text font-bold">Período calculado</span>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" onclick="copiarDocumentoPeriodo()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg">Copiar Texto</button>
+                  <button type="button" onclick="baixarDocumentoPeriodoTxt()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg">Baixar .TXT</button>
+                  <button type="button" onclick="imprimirDocumentoPeriodo()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg">Imprimir / PDF</button>
+                </div>
+              </div>
+              <pre id="conteudo-documento-periodo" class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-200 whitespace-pre-wrap max-h-80 overflow-y-auto scrollbar-thin"></pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-only hidden grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+            <h2 class="font-bold text-white text-sm flex items-center gap-2 border-b border-slate-800 pb-3 mb-3">
+              <i data-lucide="user-plus" class="w-4 h-4 theme-accent-text"></i> Cadastrar Membro na Corporação
+            </h2>
+            <form onsubmit="salvarMembroComando(event)" class="space-y-3">
+              <input type="text" id="cad-nome" placeholder="Nome no RP *" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+              <input type="text" id="cad-discord" placeholder="Discord Tag (@) *" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <select id="cad-patente" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"></select>
+                <input type="text" id="cad-qth" placeholder="Setor / QTH / Turno *" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+              </div>
+              <input type="text" id="cad-veiculo" placeholder="Veículo Particular (Opcional)" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+              <button type="submit" class="w-full theme-btn-primary font-bold py-2.5 rounded-xl text-xs transition">
+                Adicionar ao Efetivo (120d) & Gerar Token
+              </button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+            <h2 class="font-bold text-white text-sm flex items-center gap-2 border-b border-slate-800 pb-3 mb-3">
+              <i data-lucide="trophy" class="w-4 h-4 text-yellow-400"></i> Top 7 Destaques da Corporação
+            </h2>
+            <div class="relative w-full h-52 sm:h-56">
+              <canvas id="chartDestaques"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div id="banner-efetivo-exclusivo" class="hidden bg-slate-900 border theme-border rounded-2xl p-4 space-y-3">
+          <div id="aviso-cadastro-efetivo" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+            <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0 text-emerald-400"></i>
+            <span id="texto-aviso-cadastro">Você está logado e sincronizado no sistema.</span>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5">
+            <div class="text-xs text-slate-300 flex flex-wrap items-center gap-3">
+              <div>
+                <span class="text-slate-400">Meu Token de Acesso (10):</span>
+                <span id="meu-token-efetivo-display" class="font-mono font-black tracking-widest theme-accent-text ml-1">----------</span>
+              </div>
+              <span id="meu-ciclo-efetivo-display" class="text-[11px] font-mono text-slate-400">Ciclo: 120 dias</span>
+            </div>
+            <button type="button" onclick="copiarTextoToken(document.getElementById('meu-token-efetivo-display').textContent)"
+              class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg">
+              Copiar Meu Token
+            </button>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-bold text-white">Minha Ficha Individual & Turnos</h3>
+              <p id="legenda-turnos-corp" class="text-xs text-slate-400">O ponto se calcula pelo horário de início + relógio do celular e continua salvo mesmo fechando o app.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" onclick="switchTab('ponto')" class="px-3 py-1.5 theme-btn-primary text-xs font-bold rounded-lg">Bater Ponto / Turno</button>
+              <button type="button" onclick="switchTab('candidatos')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg">Ver Candidatos</button>
+              <button type="button" onclick="switchTab('eventos')" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg">Justificar Ausência</button>
+              <button type="button" onclick="switchTab('macros')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-lg">Minhas Macros</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+          <div class="p-3.5 sm:p-4 border-b border-slate-800 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <h2 id="titulo-tabela-efetivo" class="font-bold text-white text-sm sm:text-base">Quadro de Efetivo</h2>
+                <span id="contador-resultado-efetivo" class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 theme-accent-text">0</span>
+              </div>
+              <span id="legenda-slots-tabela" class="text-[10px] sm:text-[11px] font-mono text-slate-400">⬜ Neutro • 🟩 Presente • 🟨 Justificado • 🟥 Falta • 🟦 Férias</span>
+            </div>
+
+            <div class="admin-only hidden grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+              <div class="relative lg:col-span-2">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5"></i>
+                <input type="text" id="filtro-pesquisa" oninput="renderizarTabelas()" placeholder="Pesquisar por nome, @discord, token, patente ou QTH/Turno..." class="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+              </div>
+              <select id="filtro-qth" onchange="renderizarTabelas()" class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+                <option value="">Todos os Setores / Turnos</option>
+              </select>
+              <select id="filtro-patente" onchange="renderizarTabelas()" class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+                <option value="">Todas as Patentes / Cargos</option>
+              </select>
+              <div class="flex gap-1.5">
+                <select id="filtro-status" onchange="renderizarTabelas()" class="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+                  <option value="">Todos os Status</option>
+                  <option value="EM_TURNO">🟢 Em Turno (Ao Vivo)</option>
+                  <option value="COM_PRESENCA">🟩 Com Presença</option>
+                  <option value="SEM_PRESENCA">⬜ Sem Presença</option>
+                  <option value="JUSTIFICADO">🟨 Justificado</option>
+                  <option value="FERIAS">🟦 Em Férias</option>
+                </select>
+                <button type="button" onclick="limparFiltros()" title="Limpar Filtros" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold shrink-0">
+                  ✕
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto scrollbar-thin">
+            <table class="w-full text-left text-xs text-slate-300 min-w-[720px]">
+              <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                <tr>
+                  <th class="py-3 px-3 sm:px-4">Membro & Token</th>
+                  <th class="py-3 px-3 sm:px-4">Patente / Cargo</th>
+                  <th id="th-qth-turno" class="py-3 px-3 sm:px-4">Setor (QTH)</th>
+                  <th class="py-3 px-3 sm:px-4 text-center">Gestão (120d)</th>
+                  <th id="th-slots-titulo" class="py-3 px-3 sm:px-4 text-center">Turnos / Eventos</th>
+                  <th class="py-3 px-3 sm:px-4 text-center">Score</th>
+                  <th class="py-3 px-3 sm:px-4 text-center admin-only hidden">Gestão Comando</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-efetivo" class="divide-y divide-slate-800 font-medium"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 2: DESEMPENHO GERAL -->
+      <div id="tab-desempenho" class="tab-content admin-only hidden space-y-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div>
+              <h2 class="font-bold text-white text-base sm:text-lg flex items-center gap-2">
+                <i data-lucide="activity" class="w-5 h-5 theme-accent-text"></i>
+                Desempenho Geral da Corporação
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Visão individual completa de cada membro ativo (se houver 100 membros ou mais, mostra o desempenho de todos os 100)
+              </p>
+            </div>
+
+            <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 self-start md:self-auto">
+              <button type="button" id="btn-view-cards" onclick="alternarVisaoDesempenho('cards')" class="px-3 py-1.5 rounded-lg text-xs font-bold theme-btn-primary">
+                Cards Detalhados
+              </button>
+              <button type="button" id="btn-view-tabela" onclick="alternarVisaoDesempenho('tabela')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white">
+                Tabela Compacta (100+)
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Membros Avaliados</span>
+              <div id="desemp-kpi-total" class="text-lg sm:text-xl font-extrabold text-white mt-0.5">0</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Média Geral Score</span>
+              <div id="desemp-kpi-media" class="text-lg sm:text-xl font-extrabold theme-accent-text mt-0.5">0.0 pts</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Frequência Média</span>
+              <div id="desemp-kpi-freq" class="text-lg sm:text-xl font-extrabold text-emerald-400 mt-0.5">0%</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Em Turno Agora</span>
+              <div id="desemp-kpi-ativos" class="text-lg sm:text-xl font-extrabold text-cyan-400 mt-0.5">0</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+            <div class="relative lg:col-span-2">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5"></i>
+              <input type="text" id="desemp-busca" oninput="renderizarDesempenhoGeral()" placeholder="Buscar membro por nome, patente, @discord ou QTH/Turno..." class="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+            </div>
+            <select id="desemp-qth" onchange="renderizarDesempenhoGeral()" class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+              <option value="">Todos os QTHs / Turnos</option>
+            </select>
+            <select id="desemp-ordem" onchange="renderizarDesempenhoGeral()" class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+              <option value="score_desc">Maior Desempenho (Score ↓)</option>
+              <option value="score_asc">Menor Desempenho (Score ↑)</option>
+              <option value="presenca_desc">Mais Presenças (🟩 ↓)</option>
+              <option value="freq_desc">Maior Frequência (% ↓)</option>
+              <option value="nome_asc">Ordem Alfabética (A-Z)</option>
+            </select>
+            <select id="desemp-limite" onchange="renderizarDesempenhoGeral()" class="px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+              <option value="ALL">Mostrar TODOS (100+)</option>
+              <option value="100">Limite: 100 membros</option>
+              <option value="200">Limite: 200 membros</option>
+            </select>
+          </div>
+
+          <div id="grid-desempenho-membros" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[75vh] overflow-y-auto scrollbar-thin pr-1"></div>
+
+          <div id="wrapper-tabela-desempenho" class="hidden overflow-x-auto max-h-[75vh] overflow-y-auto scrollbar-thin border border-slate-800 rounded-xl">
+            <table class="w-full text-left text-xs text-slate-300 min-w-[700px]">
+              <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800 sticky top-0 z-10">
+                <tr>
+                  <th class="py-2.5 px-3">#</th>
+                  <th class="py-2.5 px-3">Membro</th>
+                  <th class="py-2.5 px-3">Patente / QTH</th>
+                  <th class="py-2.5 px-3 text-center">🟩 / 🟨 / 🟥 / 🟦</th>
+                  <th class="py-2.5 px-3">Aproveitamento</th>
+                  <th class="py-2.5 px-3 text-center">Status Turno</th>
+                  <th class="py-2.5 px-3 text-right">Score</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-desempenho-compacto" class="divide-y divide-slate-800 bg-slate-950/60"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 3: PONTO DE TRABALHO -->
+      <div id="tab-ponto" class="tab-content hidden space-y-5">
+
+        <div id="painel-ponto-hp" class="hidden bg-slate-900 border border-red-500/30 rounded-2xl p-4 sm:p-5 shadow-xl space-y-5">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="font-bold text-white text-base flex items-center gap-2">
+              <i data-lucide="timer" class="w-5 h-5 text-red-400"></i>
+              Ponto de Trabalho HP • 5 Turnos (Identificação QTH) & Controle do Turno Atual
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Os <b>5 turnos</b> identificam a qual turno pertence o membro (onde seria o QTH). O bloco do <b>turno atual</b> é o ponto usado para <b>iniciar ou finalizar</b> o serviço.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+            <div class="lg:col-span-2 space-y-2">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                1 • 5 Turnos (QTH / Identificação do Turno)
+              </label>
+              <div id="hp-cinco-botoes-turno" class="grid grid-cols-2 sm:grid-cols-5 gap-2"></div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                2 • Nome da Equipe (Opcional)
+              </label>
+              <input type="text" id="hp-nome-equipe" oninput="salvarEquipeHP()" placeholder="Ex: EQUIPE ALFA / RESGATE 02"
+                class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs uppercase">
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-[11px] font-bold text-red-300 uppercase tracking-wider">
+              3 • Turno Atual (Ponto para Iniciar ou Finalizar)
+            </label>
+            <button type="button" id="hp-box-turno-toggle" onclick="alternarTimerTurnoHP()"
+              class="w-full p-5 sm:p-6 rounded-2xl border-2 border-slate-700 bg-slate-950 hover:border-red-500/60 transition-all text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg cursor-pointer">
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span id="hp-box-tag" class="text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300">
+                    TURNO ATUAL: MANHÃ
+                  </span>
+                  <span id="hp-box-equipe-badge" class="hidden text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-200">
+                    ---
+                  </span>
+                  <span id="hp-box-inicio-hora" class="hidden text-[10px] font-mono font-bold uppercase px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">
+                    Início: --:--
+                  </span>
+                </div>
+                <div id="hp-box-acao-titulo" class="text-lg sm:text-xl font-extrabold text-white">
+                  INICIAR PONTO DO TURNO ATUAL
+                </div>
+                <p id="hp-box-subtitulo" class="text-xs text-slate-400">
+                  Clique aqui para iniciar o ponto neste turno ou para finalizar o ponto aberto.
+                </p>
+              </div>
+
+              <div class="sm:text-right shrink-0 space-y-1">
+                <div id="hp-timer-display" class="text-3xl sm:text-4xl font-black font-mono tracking-wider text-white">
+                  00:00:00
+                </div>
+                <div id="hp-box-meta-label" class="text-[11px] font-bold text-slate-400">
+                  Meta: 1h00m00s
+                </div>
+              </div>
+            </button>
+
+            <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden mt-2.5">
+              <div id="hp-timer-barra" class="h-full bg-red-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <div id="painel-ponto-padrao-header" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="font-bold text-white text-base">Ponto de Trabalho / Turno Ativo</h2>
+              <p class="text-xs text-slate-400">Bata seu ponto de entrada/saída e acompanhe quem está em serviço agora</p>
+            </div>
+            <div id="controles-ponto-efetivo" class="flex flex-wrap gap-2">
+              <button type="button" id="btn-iniciar-qrv" onclick="iniciarTurnoPonto()" class="px-4 py-2 theme-btn-primary font-bold text-xs rounded-xl">
+                ▶ Iniciar Turno (QRV)
+              </button>
+              <button type="button" id="btn-encerrar-qtx" onclick="encerrarTurnoPonto()" class="hidden px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl">
+                ■ Encerrar Turno (QTX)
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-xs font-bold theme-accent-text uppercase mb-2.5">Em Serviço Agora</h3>
+            <div id="lista-em-servico-qrv" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+          </div>
+
+          <div class="border-t border-slate-800 pt-4">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-2.5">Histórico Recente de Turnos</h3>
+            <div class="overflow-x-auto scrollbar-thin">
+              <table class="w-full text-left text-xs text-slate-300 min-w-[540px]">
+                <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                  <tr>
+                    <th class="py-2.5 px-3">Militar</th>
+                    <th class="py-2.5 px-3">Turno / Equipe</th>
+                    <th class="py-2.5 px-3">Início</th>
+                    <th class="py-2.5 px-3">Fim</th>
+                    <th class="py-2.5 px-3 text-right">Duração / Meta</th>
+                  </tr>
+                </thead>
+                <tbody id="tabela-historico-ponto" class="divide-y divide-slate-800"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 4: CANDIDATOS -->
+      <div id="tab-candidatos" class="tab-content hidden space-y-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h2 id="titulo-aba-candidatos" class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="user-plus" class="w-5 h-5 theme-accent-text"></i>
+                Candidatos Inscritos na Corporação
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Lista de candidatos com seu token único de 10 caracteres gerado na inscrição/admissão
+              </p>
+            </div>
+            <span id="contador-candidatos-lista" class="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 theme-accent-text">0 candidato(s)</span>
+          </div>
+
+          <div id="lista-candidatos-corporacao" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+      </div>
+
+      <!-- ABA 5: MACROS -->
+      <div id="tab-macros" class="tab-content hidden space-y-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="font-bold text-white text-base">Macros Personalizadas do Meu Cadastro</h2>
+              <p class="text-xs text-slate-400">Geradas automaticamente com sua Patente, Nome, Setor/Turno e Veículo desta corporação</p>
+            </div>
+            <button type="button" onclick="copiarTodasMacrosAba()" class="px-3.5 py-2 theme-btn-primary text-white text-xs font-bold rounded-xl self-start sm:self-auto">
+              Copiar Todas as Macros
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Patente</label>
+              <select id="macro-patente-aba" onchange="gerarMacrosPersonalizadas()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"></select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nome no RP</label>
+              <input type="text" id="macro-nome-aba" oninput="gerarMacrosPersonalizadas()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Setor / QTH / Turno</label>
+              <input type="text" id="macro-setor-aba" oninput="gerarMacrosPersonalizadas()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Veículo</label>
+              <input type="text" id="macro-veiculo-aba" oninput="gerarMacrosPersonalizadas()" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+            </div>
+          </div>
+
+          <div id="container-macros-lista-aba" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- ABA 6: JUSTIFICATIVAS -->
+      <div id="tab-eventos" class="tab-content hidden space-y-5">
+        <div id="card-enviar-justificativa" class="hidden bg-slate-900 border theme-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="font-bold text-white text-base">Justificar Ausência de Turno / Evento ao Comando</h2>
+            <p class="text-xs text-slate-400">Selecione um ou mais dos 5 botões de turno/horário: eles ficam amarelos (🟨) na sua ficha e vão para o Comando</p>
+          </div>
+
+          <form onsubmit="enviarJustificativaFirestore(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Tipo *</label>
+                <select id="just-tipo-atividade" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+                  <option value="Evento / Turno">📅 Evento / Turno Regular</option>
+                  <option value="Ronda / Patrulha">🛡️ Ronda / Patrulha</option>
+                  <option value="Treinamento">🎯 Treinamento / Instrução</option>
+                  <option value="Reunião">📢 Reunião Geral</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Data e Hora *</label>
+                <input type="datetime-local" id="just-data-hora" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Superior Responsável *</label>
+                <input type="text" id="just-comando-resp" placeholder="Ex: [CEL] KARTER" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1.5">5 Botões de Turno / Horário Afetados *</label>
+              <div id="checkboxes-turnos-just" class="grid grid-cols-2 sm:grid-cols-5 gap-2 bg-slate-950 border border-slate-800 p-3 rounded-xl"></div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Motivo Detalhado da Ausência *</label>
+              <textarea id="just-descricao-motivo" rows="3" placeholder="Explique o motivo da ausência neste turno..." required class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs resize-none"></textarea>
+            </div>
+
+            <button type="submit" class="px-5 py-2.5 theme-btn-primary font-bold text-xs rounded-xl transition">
+              Enviar Justificativa ao Comando
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+          <h2 class="font-bold text-white text-base border-b border-slate-800 pb-3">Registro de Justificativas</h2>
+          <div id="lista-justificativas-firestore" class="space-y-2.5"></div>
+        </div>
+      </div>
+
+      <!-- ABA 7: FÉRIAS -->
+      <div id="tab-ferias" class="tab-content hidden space-y-5">
+        <div id="card-solicitar-ferias" class="bg-slate-900 border theme-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <h2 class="font-bold text-white text-base border-b border-slate-800 pb-3">Solicitar Licença / Férias</h2>
+          <form onsubmit="enviarSolicitacaoFeriasFirestore(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Quantidade de Dias *</label>
+              <input type="number" id="solic-dias" min="1" max="30" value="7" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Motivo da Licença *</label>
+              <input type="text" id="solic-motivo" placeholder="Ex: Viagem / Problemas pessoais OOC" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+            </div>
+            <div class="sm:col-span-3">
+              <button type="submit" class="px-5 py-2.5 theme-btn-primary font-bold text-xs rounded-xl">
+                Enviar Pedido de Férias ao Comando
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="admin-only hidden bg-slate-900 border border-amber-500/30 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+          <h2 class="font-bold text-white text-base">Pedidos de Férias Pendentes (Aprovação do Comando)</h2>
+          <div id="lista-solicitacoes-ferias" class="space-y-2"></div>
+        </div>
+      </div>
+
+      <!-- ABA 8: CENTRAL DE AVISOS -->
+      <div id="tab-avisos" class="tab-content hidden space-y-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <h2 class="font-bold text-white text-base border-b border-slate-800 pb-3">Central de Avisos e Ordens</h2>
+          <form onsubmit="publicarAvisoFirestore(event)" class="admin-only hidden bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input type="text" id="aviso-titulo" placeholder="Título do Aviso *" required class="sm:col-span-2 px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs">
+              <select id="aviso-categoria" class="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs">
+                <option value="Geral">Geral</option>
+                <option value="Escala">Escala / Turnos</option>
+                <option value="Urgente">Urgente</option>
+              </select>
+            </div>
+            <textarea id="aviso-mensagem" rows="2" placeholder="Conteúdo do comunicado..." required class="w-full p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs resize-none"></textarea>
+            <button type="submit" class="px-4 py-2 theme-btn-primary font-bold text-xs rounded-xl">Publicar Aviso</button>
+          </form>
+          <div id="lista-avisos-firestore" class="space-y-2.5"></div>
+        </div>
+      </div>
+
+      <!-- ABA 9: REGISTRO DE ACESSO E ATIVIDADES -->
+      <div id="tab-auditoria" class="tab-content hidden space-y-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-5 h-5 theme-accent-text"></i>
+                Registro de Acesso (Sucesso / Falha) e Atividades do Membro
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">
+                Acompanha corporação obrigatória, tentativas de login, divergências de nome/erro gráfico e atividades detalhadas do membro
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <select id="filtro-auditoria-tipo" onchange="renderizarAuditoria()" class="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+                <option value="TODOS">Todos os Registros</option>
+                <option value="LOGIN_SUCESSO">✅ Entradas Bem-Sucedidas</option>
+                <option value="LOGIN_FALHA">❌ Entradas Mal-Sucedidas</option>
+                <option value="ATIVIDADE">⚡ Atividades do Membro</option>
+              </select>
+              <input type="text" id="filtro-auditoria-busca" oninput="renderizarAuditoria()" placeholder="Filtrar por nome, token ou ação..."
+                class="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Entradas Bem-Sucedidas</span>
+              <div id="aud-stat-sucesso" class="text-lg font-extrabold text-emerald-400 mt-0.5">0</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Entradas Mal-Sucedidas</span>
+              <div id="aud-stat-falha" class="text-lg font-extrabold text-red-400 mt-0.5">0</div>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3">
+              <span class="text-[10px] font-bold text-slate-400 uppercase">Atividades Detalhadas</span>
+              <div id="aud-stat-atividades" class="text-lg font-extrabold theme-accent-text mt-0.5">0</div>
+            </div>
+          </div>
+
+          <div id="lista-registros-auditoria" class="space-y-2.5 max-h-[70vh] overflow-y-auto scrollbar-thin pr-1"></div>
+        </div>
+      </div>
+
+      <!-- ABA 10: LIMBO / EXONERADOS -->
+      <div id="tab-exonerados" class="tab-content admin-only hidden space-y-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+          <div>
+            <h2 class="font-bold text-white text-base">Limbo / Quadro de Exonerados</h2>
+            <p class="text-xs text-slate-400">Membros exonerados permanecem no limbo bloqueados de acessar como efetivo; somente o Alto Comando pode tirá-los de lá.</p>
+          </div>
+          <div class="overflow-x-auto scrollbar-thin">
+            <table class="w-full text-left text-xs text-slate-300 min-w-[480px]">
+              <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                <tr>
+                  <th class="py-3 px-4">Militar (Limbo)</th>
+                  <th class="py-3 px-4">Patente / Setor / Token</th>
+                  <th class="py-3 px-4">Motivo</th>
+                  <th class="py-3 px-4 text-center">Tirar do Limbo (Alto Comando)</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-exonerados" class="divide-y divide-slate-800"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL TOKEN -->
+  <div id="modal-token-admissao" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <div class="bg-slate-900 border theme-border rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-sm sm:text-base">Token Individual de Acesso (10 Caracteres)</h3>
+        <button type="button" onclick="fecharModalTokenAdmissao()" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white">✕</button>
+      </div>
+      <p id="modal-token-subtitulo" class="text-xs text-slate-400">Token único gerado para login na área de efetivo.</p>
+      <div class="flex items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3">
+        <span id="modal-token-valor" class="font-mono text-lg sm:text-xl font-black tracking-widest theme-accent-text">----------</span>
+        <button type="button" onclick="copiarTextoToken(document.getElementById('modal-token-valor').textContent)"
+          class="px-3.5 py-2 theme-btn-primary text-xs font-bold rounded-xl shrink-0">
+          Copiar Token
+        </button>
+      </div>
+      <div class="flex justify-end">
+        <button type="button" onclick="fecharModalTokenAdmissao()" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-xl">Concluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDIÇÃO COMPLETA -->
+  <div id="modal-editar-membro" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+    <div class="bg-slate-900 border theme-border rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-sm sm:text-base flex items-center gap-2">
+          <i data-lucide="user-cog" class="w-4 h-4 theme-accent-text"></i>
+          Editar Informações do Membro (Comando)
+        </h3>
+        <button type="button" onclick="fecharModalEditarMembro()" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white">✕</button>
+      </div>
+
+      <form onsubmit="salvarEdicaoMembroComando(event)" class="space-y-3">
+        <input type="hidden" id="edit-membro-id">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nome no RP *</label>
+            <input type="text" id="edit-membro-nome" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs uppercase">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Discord (@) *</label>
+            <input type="text" id="edit-membro-discord" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Patente / Cargo *</label>
+            <select id="edit-membro-patente" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs"></select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Setor / QTH / Turno *</label>
+            <input type="text" id="edit-membro-qth" required class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs uppercase">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Veículo Particular</label>
+            <input type="text" id="edit-membro-veiculo" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs uppercase">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Token de 10 Caracteres</label>
+            <div class="flex gap-1.5">
+              <input type="text" id="edit-membro-token" readonly class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl theme-accent-text text-xs font-mono font-bold tracking-wider">
+              <button type="button" onclick="copiarTextoToken(document.getElementById('edit-membro-token').value)" class="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold shrink-0">Copiar</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1.5">Status dos 5 Slots (Presença / Falta / Justificativa / Férias)</label>
+          <div id="edit-membro-slots" class="grid grid-cols-2 sm:grid-cols-5 gap-2"></div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+          <button type="button" onclick="fecharModalEditarMembro()" class="px-4 py-2 bg-slate-800 text-slate-300 text-xs font-bold rounded-xl">Cancelar</button>
+          <button type="submit" class="px-5 py-2 theme-btn-primary text-white text-xs font-bold rounded-xl">Salvar Alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm bg-slate-900 border theme-border text-white px-4 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 text-xs font-bold text-center sm:text-left">
+    Notificação
+  </div>
+
+  <!-- SCRIPT UNIFICADO -->
+  <script type="module">
+    import {
+      db,
+      DIAS_GESTAO,
+      formatarDataBR,
+      calcularDiasRestantes,
+      estaCicloExpirado,
+      criarRegistro,
+      salvarComId,
+      atualizarRegistro,
+      apagarRegistro,
+      escutarRegistros
+    } from "./firebase.js";
+    import {
+      collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc,
+      query, where, orderBy, limit, onSnapshot, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfigValido = true;
+    const MS_POR_DIA = 24 * 60 * 60 * 1000;
+    const MS_GESTAO_120D = DIAS_GESTAO * MS_POR_DIA;
+
+    const PATENTES_EB = ["REC", "SD", "SGT", "1SGT", "SGT-MOR", "TEN", "CAP", "MAJ", "CEL", "MAJ-GEN", "TEN-GEN", "CEL-GEN", "ADJ", "FED"];
+
+    const CORPORACOES = {
+      EXERCITO: {
+        nome: "EXÉRCITO DE MESA (EB)",
+        tema: "verde",
+        corGrafico: "#22c55e",
+        setorPadrao: "APM",
+        slotsLabels: ["11H", "13H", "15H", "17H", "19H"],
+        patentes: PATENTES_EB,
+        modeloSenhaRegex: /^\d{3}EBAP3$/,
+        exemploSenha: "000EBAP3",
+        gerarMacros: (p, n, s, v) => [
+          { cat: "Pessoais", txt: `CONTINÊNCIA SR(A) [${p}] ${n} [${s}], A QRV MEU MÁXIMO RESPEITO E ADMIRAÇÃO AOS SRS!` },
+          { cat: "Pessoais", txt: `/flobby SENHORES(AS) [${p}] ${n} [${s}] INICIANDO MINHAS FUNÇÕES! TKS` },
+          { cat: "Pessoais", txt: `/flobby SENHORES(AS) [${p}] ${n} [${s}] INDO DE QTX, BOM TRABALHO A TODOS!!` },
+          { cat: "Pessoais", txt: `/flobby [${p}] ${n} [${s}] ENTRANDO NA BASE COM VEÍCULO PARTICULAR [${v}]` },
+          { cat: "Portaria", txt: `EXÉRCITO DE MESA: ATENÇÃO, ÁREA MILITAR. AFASTE-SE. CASO PRECISE DE AJUDA, PODE TIRAR SUAS DÚVIDAS. CASO CONTRÁRIO, PEDIMOS QUE SE RETIRE!` },
+          { cat: "Ronda", txt: `ATENÇÃO EXÉRCITO NO LOCAL FAZENDO A RONDA DE ROTINA. GUARDEM SUAS ARMAS PARA EVITAR CONFLITOS.` }
+        ]
+      },
+      SIST_HP: {
+        nome: "SIST HP (HOSPITAL)",
+        tema: "vermelho",
+        corGrafico: "#ef4444",
+        setorPadrao: "MANHÃ",
+        slotsLabels: ["MANHÃ", "TARDE", "NOITE", "MADRUGADA", "PLANTÃO"],
+        patentes: ["ENF", "ENF-CLI", "ASS-MED", "MED-INT", "MED-RES", "CLI-GER", "MED-ESP", "PLA", "MED-CHEF-SUB", "MÉDICO-CHEFE"],
+        modeloSenhaRegex: /^\d{3}HPAP1$/,
+        exemploSenha: "000HPAP1",
+        gerarMacros: (p, n, s) => [
+          { cat: "Identificação", txt: `/me [${p}] ${n} [${s}] - APRESENTANDO-ME CONTINÊNCIA E MÁXIMO RESPEITO SR(A)!! TKS!!` },
+          { cat: "Plantão", txt: `/flobby [${p}] ${n} [${s}] INICIANDO PLANTÃO!` },
+          { cat: "Plantão", txt: `/flobby [${p}] ${n} [${s}] FINALIZANDO PLANTÃO!` },
+          { cat: "Atendimento", txt: `/me INICIANDO REANIMAÇÃO.` },
+          { cat: "Atendimento", txt: `/me SUA CONDIÇÃO ESTÁ ESTÁVEL. TKS` },
+          { cat: "Portaria HP", txt: `/me SE O(A) SENHOR(A) NÃO PRECISAR DE ATENDIMENTO MÉDICO, IREI PEDIR GENTILMENTE PARA QUE SE RETIRE.` }
+        ]
+      },
+      FLPD: {
+        nome: "F.L.P.D (POLÍCIA / DP)",
+        tema: "azul",
+        corGrafico: "#3b82f6",
+        setorPadrao: "DP",
+        slotsLabels: ["11H", "13H", "15H", "17H", "19H"],
+        patentes: PATENTES_EB,
+        modeloSenhaRegex: /^\d{3}DPAP2$/,
+        exemploSenha: "000DPAP2",
+        gerarMacros: (p, n, s, v) => [
+          { cat: "Patrulha", txt: `/flobby [${p}] ${n} [${s}] INICIANDO PATRULHAMENTO OSTENSIVO! QRV` },
+          { cat: "Patrulha", txt: `/flobby [${p}] ${n} [${s}] ENCERRANDO SERVIÇO! QTX` },
+          { cat: "Abordagem", txt: `POLÍCIA: PARADO! MÃOS NA CABEÇA E NÃO REAGE, ABORDAGEM DE ROTINA!` },
+          { cat: "Viatura", txt: `/flobby [${p}] ${n} [${s}] PUXANDO VTR PARA PATRULHA [${v}]` }
+        ]
+      }
+    };
+
+    const CICLO_CORES = ['neutro', 'verde', 'amarelo', 'vermelho', 'azul', 'preto'];
+    const UMA_HORA_MS = 3600000;
+    const ALFABETO_TOKEN = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+    function criarCamposCiclo120Dias(inicioMs = Date.now(), dias = DIAS_GESTAO) {
+      const fimMs = inicioMs + dias * MS_POR_DIA;
+      return {
+        diasCiclo: dias,
+        cicloInicioMs: inicioMs,
+        cicloFimMs: fimMs
+      };
+    }
+
+    function obterDiasRestantesCiclo(item) {
+      if (item?.cicloFimMs) {
+        return Math.max(0, Math.ceil((Number(item.cicloFimMs) - Date.now()) / MS_POR_DIA));
+      }
+      if (item?.expiraEm) {
+        return calcularDiasRestantes(item.expiraEm);
+      }
+      return DIAS_GESTAO;
+    }
+
+    function formatarFimCicloBR(item) {
+      if (item?.cicloFimMs) {
+        return formatarDataBR(Number(item.cicloFimMs));
+      }
+      if (item?.expiraEm) {
+        return formatarDataBR(item.expiraEm);
+      }
+      return formatarDataBR(Date.now() + MS_GESTAO_120D);
+    }
+
+    function notificarAviso(msg) {
+      if (typeof window.showToast === 'function') {
+        window.showToast(msg);
+      } else {
+        console.warn(msg);
+      }
+    }
+
+    function normalizarCorporacao(corp) {
+      const chave = String(corp || corpAtual || 'EXERCITO').toUpperCase().trim();
+      return CORPORACOES[chave] ? chave : 'EXERCITO';
+    }
+
+    function gerarIdUnico(prefixo, corp, token = '') {
+      const c = normalizarCorporacao(corp);
+      const sufixo = (token || Math.random().toString(36).slice(2, 8)).toUpperCase().replace(/[^A-Z0-9]/g, '');
+      return `${prefixo}_${c}_${Date.now()}_${sufixo}`;
+    }
+
+    function gerarTokenUnico10(tokensJaUsados = new Set()) {
+      for (let tentativa = 0; tentativa < 200; tentativa++) {
+        let token = "";
+        for (let i = 0; i < 10; i++) {
+          const idx = Math.floor(Math.random() * ALFABETO_TOKEN.length);
+          token += ALFABETO_TOKEN[idx];
+        }
+        if (token.length === 10 && !tokensJaUsados.has(token)) {
+          return token;
+        }
+      }
+      return (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toUpperCase().slice(0, 10).padEnd(10, "X");
+    }
+
+    function coletarTokensExistentes() {
+      const usados = new Set();
+      membros.forEach(m => { if (m.tokenAcesso) usados.add(String(m.tokenAcesso).toUpperCase().trim()); });
+      candidatos.forEach(c => { if (c.tokenAcesso) usados.add(String(c.tokenAcesso).toUpperCase().trim()); });
+      return usados;
+    }
+
+    window.copiarTextoToken = function(valor) {
+      const limpo = (valor || "").trim();
+      if (!limpo || limpo.includes("-")) return;
+      navigator.clipboard?.writeText(limpo);
+      showToast(`Token ${limpo} copiado!`);
+    };
+
+    function abrirModalTokenAdmissao(token, subtitulo) {
+      document.getElementById('modal-token-valor').textContent = token;
+      document.getElementById('modal-token-subtitulo').textContent = subtitulo || "Token único de 10 caracteres para login na área de efetivo.";
+      document.getElementById('modal-token-admissao').classList.remove('hidden');
+    }
+
+    window.fecharModalTokenAdmissao = function() {
+      document.getElementById('modal-token-admissao').classList.add('hidden');
+    };
+
+    function hojeIsoLocal(ms = Date.now()) {
+      const d = new Date(ms);
+      const ano = d.getFullYear();
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const dia = String(d.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    function formatarDataHoraRegistro(ms = Date.now()) {
+      const d = new Date(ms);
+      return `${hojeIsoLocal(ms)} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    }
+
+    function lerPersistente(chave, fallback = null) {
+      try {
+        const vLocal = localStorage.getItem(chave);
+        if (vLocal !== null) return vLocal;
+        const vSess = sessionStorage.getItem(chave);
+        return vSess !== null ? vSess : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function salvarPersistente(chave, valor) {
+      try {
+        if (valor === null || valor === undefined) {
+          localStorage.removeItem(chave);
+          sessionStorage.removeItem(chave);
+        } else {
+          localStorage.setItem(chave, String(valor));
+          sessionStorage.setItem(chave, String(valor));
+        }
+      } catch {}
+    }
+
+    function lerJsonPersistente(chave, fallback = null) {
+      try {
+        const raw = lerPersistente(chave, null);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function salvarJsonPersistente(chave, obj) {
+      salvarPersistente(chave, obj ? JSON.stringify(obj) : null);
+    }
+
+    function chaveTurnoLocal(membroId, corp) {
+      return `rp_turno_aberto_${normalizarCorporacao(corp)}_${membroId || usuarioLogado?.id || 'default'}`;
+    }
+
+    let corpEscolhidaNoPortal = lerPersistente('rp_corp_escolhida_portal') === '1';
+    let corpAtual = normalizarCorporacao(lerPersistente('rp_corp_atual') || 'EXERCITO');
+    let modoEfetivoPortal = lerPersistente('rp_modo_efetivo_portal') || 'login';
+    let modoAcesso = lerPersistente('rp_modo_acesso') || null;
+    let usuarioLogado = lerJsonPersistente('rp_usuario_logado', null);
+    let statusCadastroMensagem = lerPersistente('rp_status_cadastro_msg') || '';
+
+    let membros = lerJsonPersistente('rp_membros_cache', []) || [];
+    let candidatos = lerJsonPersistente('rp_candidatos_cache', []) || [];
+    let pontosAtivos = [];
+    let pontosEncerradosFirestore = [];
+    let historicoLocalEncerrados = lerJsonPersistente('rp_historico_local', []) || [];
+    let registrosAuditoriaFirestore = [];
+    let registrosAuditoriaLocal = lerJsonPersistente('rp_auditoria_local', []) || [];
+    let chartDestaques = null;
+    let turnoAtivoId = lerPersistente('rp_turno_ativo_id') || null;
+    let turnoQthSelecionado = lerPersistente('rp_hp_qth_turno') || 'MANHÃ';
+    let equipeHpAtual = lerPersistente('rp_hp_equipe') || '';
+    let intervaloTimerHp = null;
+    let visaoDesempenho = 'cards';
+    let unsubscribers = [];
+    let ultimoDocumentoPeriodoTexto = '';
+    let editSlotsTemp = ['neutro','neutro','neutro','neutro','neutro'];
+
+    function persistirCachesLocais() {
+      salvarJsonPersistente('rp_membros_cache', membros);
+      salvarJsonPersistente('rp_candidatos_cache', candidatos);
+    }
+
+    async function registrarEventoAuditoria({
+      categoria,
+      membroId = '',
+      nome = '',
+      patente = '',
+      token = '',
+      acao = '',
+      detalhes = '',
+      corp = corpAtual
+    }) {
+      const corporacaoObrigatoria = normalizarCorporacao(corp);
+      const agoraMs = Date.now();
+      const registro = {
+        id: `aud_${agoraMs}_${Math.random().toString(36).slice(2, 7)}`,
+        corporacao: corporacaoObrigatoria,
+        categoria,
+        membroId,
+        nome: (nome || 'NÃO INFORMADO').toUpperCase().trim(),
+        patente: (patente || '').trim(),
+        token: (token || '').toUpperCase().trim(),
+        acao: (acao || '').trim(),
+        detalhes: (detalhes || '').trim(),
+        dataHoraTexto: formatarDataHoraRegistro(agoraMs),
+        criadoMs: agoraMs
+      };
+
+      registrosAuditoriaLocal = [registro, ...registrosAuditoriaLocal].slice(0, 150);
+      salvarJsonPersistente('rp_auditoria_local', registrosAuditoriaLocal);
+      renderizarAuditoria();
+
+      if (firebaseConfigValido) {
+        try {
+          await addDoc(collection(db, 'auditoria_acessos'), {
+            ...registro,
+            criadoEm: serverTimestamp()
+          });
+        } catch (e) {}
+      }
+    }
+
+    function obterRegistrosAuditoriaMesclados() {
+      const corpAlvo = normalizarCorporacao(corpAtual);
+      const mapa = new Map();
+      registrosAuditoriaFirestore.forEach(r => {
+        const c = normalizarCorporacao(r.corporacao);
+        const key = r.id || `${r.criadoMs}_${c}_${r.nome}_${r.acao}`;
+        mapa.set(key, { ...r, corporacao: c });
+      });
+      registrosAuditoriaLocal.forEach(r => {
+        const c = normalizarCorporacao(r.corporacao);
+        const key = r.id || `${r.criadoMs}_${c}_${r.nome}_${r.acao}`;
+        if (!mapa.has(key)) mapa.set(key, { ...r, corporacao: c });
+      });
+      return Array.from(mapa.values())
+        .filter(r => r.corporacao === corpAlvo)
+        .sort((a, b) => (b.criadoMs || 0) - (a.criadoMs || 0));
+    }
+
+    window.renderizarAuditoria = function() {
+      const container = document.getElementById('lista-registros-auditoria');
+      if (!container) return;
+
+      const isComando = modoAcesso === 'comando';
+      const tipoFiltro = document.getElementById('filtro-auditoria-tipo')?.value || 'TODOS';
+      const busca = (document.getElementById('filtro-auditoria-busca')?.value || '').toLowerCase().trim();
+
+      let lista = obterRegistrosAuditoriaMesclados();
+      if (!isComando && usuarioLogado?.id) {
+        lista = lista.filter(r =>
+          r.membroId === usuarioLogado.id ||
+          (r.token && usuarioLogado.tokenAcesso && r.token === usuarioLogado.tokenAcesso.toUpperCase())
+        );
+      }
+
+      const qtdSucesso = lista.filter(r => r.categoria === 'LOGIN_SUCESSO').length;
+      const qtdFalha = lista.filter(r => r.categoria === 'LOGIN_FALHA').length;
+      const qtdAtiv = lista.filter(r => r.categoria === 'ATIVIDADE').length;
+
+      const elSucesso = document.getElementById('aud-stat-sucesso');
+      const elFalha = document.getElementById('aud-stat-falha');
+      const elAtiv = document.getElementById('aud-stat-atividades');
+      if (elSucesso) elSucesso.textContent = qtdSucesso;
+      if (elFalha) elFalha.textContent = qtdFalha;
+      if (elAtiv) elAtiv.textContent = qtdAtiv;
+
+      if (tipoFiltro !== 'TODOS') {
+        lista = lista.filter(r => r.categoria === tipoFiltro);
+      }
+      if (busca) {
+        lista = lista.filter(r =>
+          `${r.corporacao} ${r.nome} ${r.patente} ${r.token} ${r.acao} ${r.detalhes} ${r.dataHoraTexto || ''}`.toLowerCase().includes(busca)
+        );
+      }
+
+      if (!lista.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">Nenhum registro encontrado para a corporação ${CORPORACOES[corpAtual].nome}.</p>`;
+        return;
+      }
+
+      container.innerHTML = lista.map(r => {
+        let badgeClasse = 'bg-slate-800 text-slate-300';
+        let badgeTexto = 'REGISTRO';
+        let bordaClasse = 'border-slate-800';
+
+        if (r.categoria === 'LOGIN_SUCESSO') {
+          badgeClasse = 'bg-emerald-500/20 text-emerald-400';
+          badgeTexto = 'LOGIN BEM-SUCEDIDO';
+          bordaClasse = 'border-emerald-500/30';
+        } else if (r.categoria === 'LOGIN_FALHA') {
+          badgeClasse = 'bg-red-500/20 text-red-400';
+          badgeTexto = 'LOGIN MAL-SUCEDIDO';
+          bordaClasse = 'border-red-500/40';
+        } else if (r.categoria === 'ATIVIDADE') {
+          badgeClasse = 'bg-cyan-500/20 text-cyan-300';
+          badgeTexto = 'ATIVIDADE DO MEMBRO';
+          bordaClasse = 'border-cyan-500/25';
+        }
+
+        const corpNome = CORPORACOES[r.corporacao]?.nome || r.corporacao;
+
+        return `
+          <div class="p-3.5 rounded-xl bg-slate-950 border ${bordaClasse} space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-amber-300">${corpNome}</span>
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded ${badgeClasse}">${badgeTexto}</span>
+                <span class="text-xs font-bold text-white">${r.patente ? `[${r.patente}] ` : ''}${r.nome}</span>
+                ${r.token ? `<span class="text-[11px] font-mono theme-accent-text">Token: ${r.token}</span>` : ''}
+              </div>
+              <span class="text-[10px] font-mono text-slate-400">${r.dataHoraTexto || ''}</span>
+            </div>
+            <div class="text-xs font-semibold text-slate-200">${r.acao}</div>
+            ${r.detalhes ? `<div class="text-[11px] text-slate-400 font-mono">${r.detalhes}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    };
+
+    function obterTurnoLocalAberto(membroId = usuarioLogado?.id) {
+      if (!membroId) return null;
+      const dado = lerJsonPersistente(chaveTurnoLocal(membroId, corpAtual), null);
+      if (!dado || !dado.inicioMs) return null;
+      return dado;
+    }
+
+    function salvarTurnoLocalAberto(dado, membroId = usuarioLogado?.id) {
+      if (!membroId) return;
+      salvarJsonPersistente(chaveTurnoLocal(membroId, corpAtual), dado);
+    }
+
+    function limparTurnoLocalAberto(membroId = usuarioLogado?.id) {
+      if (!membroId) return;
+      salvarPersistente(chaveTurnoLocal(membroId, corpAtual), null);
+    }
+
+    function mesclarPontosAtivosComLocal() {
+      const locais = [];
+      if (usuarioLogado?.id) {
+        const meuLocal = obterTurnoLocalAberto(usuarioLogado.id);
+        if (meuLocal && normalizarCorporacao(meuLocal.corporacao) === corpAtual) {
+          locais.push({
+            id: meuLocal.docId || `local_${usuarioLogado.id}`,
+            ...meuLocal
+          });
+        }
+      }
+
+      const mapa = new Map();
+      locais.forEach(p => mapa.set(p.membroId, p));
+      pontosAtivos.forEach(p => {
+        const jaTem = mapa.get(p.membroId);
+        if (!jaTem || (p.inicioMs && p.inicioMs <= jaTem.inicioMs)) {
+          mapa.set(p.membroId, p);
+        }
+      });
+      return Array.from(mapa.values());
+    }
+
+    function atualizarStatusRede() {
+      const dot = document.getElementById('net-dot');
+      const txt = document.getElementById('net-text');
+      const ok = navigator.onLine && firebaseConfigValido;
+      dot.className = `w-2 h-2 rounded-full ${ok ? 'bg-emerald-500' : 'bg-red-500'}`;
+      txt.textContent = ok ? 'Online' : 'Offline';
+    }
+    window.addEventListener('online', atualizarStatusRede);
+    window.addEventListener('offline', atualizarStatusRede);
+    atualizarStatusRede();
+
+    function aplicarTemaCorporacao(corpKey) {
+      const chave = normalizarCorporacao(corpKey);
+      const cfg = CORPORACOES[chave];
+      document.body.setAttribute('data-theme', cfg.tema);
+
+      document.querySelectorAll('.corp-btn').forEach(btn => {
+        const ativa = corpEscolhidaNoPortal && btn.dataset.corp === chave;
+        btn.classList.toggle('theme-btn-primary', ativa);
+        btn.classList.toggle('theme-border', ativa);
+        btn.classList.toggle('bg-slate-950', !ativa);
+        btn.classList.toggle('border-slate-700', !ativa);
+        btn.classList.toggle('text-slate-300', !ativa);
+      });
+    }
+
+    function atualizarVisibilidadePortal() {
+      corpAtual = normalizarCorporacao(corpAtual);
+      const cfg = CORPORACOES[corpAtual];
+      document.getElementById('barra-comando-topo').classList.toggle('hidden', !corpEscolhidaNoPortal);
+      document.getElementById('area-efetivo-portal').classList.toggle('hidden', !corpEscolhidaNoPortal);
+      document.getElementById('btn-trocar-corp').classList.toggle('hidden', !corpEscolhidaNoPortal);
+
+      if (corpEscolhidaNoPortal) {
+        document.getElementById('subtitulo-portal').textContent = `Corporação selecionada: ${cfg.nome}`;
+        document.getElementById('badge-corp-escolhida').textContent = cfg.nome;
+      } else {
+        document.getElementById('subtitulo-portal').textContent = 'Escolha a corporação para continuar';
+      }
+      aplicarTemaCorporacao(corpAtual);
+      alternarModoEfetivoPortal(modoEfetivoPortal);
+    }
+
+    window.alternarModoEfetivoPortal = function(modo) {
+      modoEfetivoPortal = modo === 'inscricao' ? 'inscricao' : 'login';
+      salvarPersistente('rp_modo_efetivo_portal', modoEfetivoPortal);
+
+      const isLogin = modoEfetivoPortal === 'login';
+      document.getElementById('form-login-rapido-efetivo').classList.toggle('hidden', !isLogin);
+      document.getElementById('form-inscricao-efetivo').classList.toggle('hidden', isLogin);
+
+      const btnLogin = document.getElementById('btn-modo-login-efetivo');
+      const btnInsc = document.getElementById('btn-modo-inscricao-efetivo');
+      btnLogin.classList.toggle('theme-btn-primary', isLogin);
+      btnLogin.classList.toggle('text-slate-400', !isLogin);
+      btnInsc.classList.toggle('theme-btn-primary', !isLogin);
+      btnInsc.classList.toggle('text-slate-400', isLogin);
+    };
+
+    window.selecionarCorporacaoInicial = function(corpKey) {
+      const novaCorp = normalizarCorporacao(corpKey);
+      if (corpAtual !== novaCorp) {
+        modoAcesso = null;
+        usuarioLogado = null;
+        statusCadastroMensagem = '';
+        salvarPersistente('rp_modo_acesso', null);
+        salvarJsonPersistente('rp_usuario_logado', null);
+        salvarPersistente('rp_status_cadastro_msg', null);
+      }
+      corpAtual = novaCorp;
+      corpEscolhidaNoPortal = true;
+      salvarPersistente('rp_corp_atual', corpAtual);
+      salvarPersistente('rp_corp_escolhida_portal', '1');
+      preencherSelectsCorporacao();
+      atualizarVisibilidadePortal();
+      voltarParaEfetivoPortal();
+      renderizarAuditoria();
+    };
+
+    window.resetarSelecaoCorporacao = function() {
+      corpEscolhidaNoPortal = false;
+      salvarPersistente('rp_corp_escolhida_portal', null);
+      atualizarVisibilidadePortal();
+    };
+
+    function preencherSelectsCorporacao() {
+      const cfg = CORPORACOES[corpAtual];
+      ['insc-efetivo-patente', 'cad-patente', 'macro-patente-aba', 'edit-membro-patente'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = cfg.patentes.map(p => `<option value="${p}">${p}</option>`).join('');
+      });
+      const isHP = corpAtual === 'SIST_HP';
+      document.getElementById('label-insc-setor').textContent = isHP ? 'Turno (QTH) *' : 'Setor / QTH *';
+      const setorInsc = document.getElementById('insc-efetivo-setor');
+      if (setorInsc && !setorInsc.value) setorInsc.value = cfg.setorPadrao;
+      const setorCad = document.getElementById('cad-qth');
+      if (setorCad && !setorCad.value) setorCad.value = cfg.setorPadrao;
+
+      const dicaCmd = document.getElementById('dica-modelo-comando');
+      const inpCmd = document.getElementById('login-cmd-senha');
+      if (dicaCmd) {
+        dicaCmd.innerHTML = `Modelo da corporação: <span class="text-amber-400">${cfg.exemploSenha}</span> (substitua <b>000</b> por 3 números únicos por pessoa).`;
+      }
+      if (inpCmd) {
+        inpCmd.placeholder = `Ex: 001${cfg.exemploSenha.slice(3)}`;
+      }
+    }
+
+    window.abrirFormularioLogin = function(tipo) {
+      if (!corpEscolhidaNoPortal) return;
+      document.getElementById('card-acesso-efetivo').classList.toggle('hidden', tipo === 'comando');
+      document.getElementById('form-box-comando').classList.toggle('hidden', tipo !== 'comando');
+    };
+
+    window.voltarParaEfetivoPortal = function() {
+      document.getElementById('form-box-comando').classList.add('hidden');
+      document.getElementById('card-acesso-efetivo').classList.remove('hidden');
+    };
+
+    window.autenticarComando = async function(e) {
+      e.preventDefault();
+      corpAtual = normalizarCorporacao(corpAtual);
+      const usuario = (document.getElementById('login-cmd-usuario')?.value || '').toUpperCase().trim();
+      const senha = (document.getElementById('login-cmd-senha')?.value || '').toUpperCase().trim();
+      const cfg = CORPORACOES[corpAtual];
+
+      if (!usuario || usuario.length < 2) {
+        await registrarEventoAuditoria({
+          corp: corpAtual,
+          categoria: 'LOGIN_FALHA',
+          nome: usuario || 'COMANDO',
+          patente: 'COMANDO',
+          token: senha,
+          acao: 'Tentativa de login do Comando falhou',
+          detalhes: 'Usuário do Comando não informado ou inválido.'
+        });
+        notificarAviso("Informe o usuário do Comando (mínimo 2 caracteres).");
+        return;
+      }
+
+      const senhaValidaModelo = cfg.modeloSenhaRegex.test(senha) || (corpAtual === 'EXERCITO' && senha === 'EB1SMESA');
+      if (!senhaValidaModelo) {
+        await registrarEventoAuditoria({
+          corp: corpAtual,
+          categoria: 'LOGIN_FALHA',
+          nome: usuario,
+          patente: 'COMANDO',
+          token: senha,
+          acao: 'Tentativa de login do Comando falhou',
+          detalhes: `Chave "${senha}" fora do padrão ${cfg.exemploSenha}.`
+        });
+        notificarAviso(`Chave inválida para ${cfg.nome}! Use o modelo ${cfg.exemploSenha}.`);
+        return;
+      }
+
+      const chaveId = `${corpAtual}_${senha}`;
+      if (firebaseConfigValido) {
+        try {
+          const chaveRef = doc(db, 'chaves_comando', chaveId);
+          const chaveSnap = await getDoc(chaveRef);
+          if (chaveSnap.exists()) {
+            const dadosChave = chaveSnap.data();
+            if (dadosChave.usuario && dadosChave.usuario !== usuario) {
+              await registrarEventoAuditoria({
+                corp: corpAtual,
+                categoria: 'LOGIN_FALHA',
+                nome: usuario,
+                patente: 'COMANDO',
+                token: senha,
+                acao: 'Tentativa de login do Comando bloqueada',
+                detalhes: `Chave "${senha}" já pertence a ${dadosChave.usuario}.`
+              });
+              notificarAviso(`A combinação "${senha}" já está vinculada a outra pessoa (${dadosChave.usuario}).`);
+              return;
+            }
+            await updateDoc(chaveRef, { ultimoAcessoEm: serverTimestamp() });
+          } else {
+            await setDoc(chaveRef, {
+              corporacao: corpAtual,
+              codigo: senha,
+              usuario,
+              criadoEm: serverTimestamp(),
+              ultimoAcessoEm: serverTimestamp()
+            });
+          }
+        } catch (err) {}
+      }
+
+      modoAcesso = 'comando';
+      usuarioLogado = {
+        id: 'admin',
+        nome: usuario,
+        patente: `COMANDO • ${senha}`,
+        corporacao: corpAtual
+      };
+      salvarPersistente('rp_modo_acesso', modoAcesso);
+      salvarJsonPersistente('rp_usuario_logado', usuarioLogado);
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'LOGIN_SUCESSO',
+        membroId: 'admin',
+        nome: usuario,
+        patente: 'COMANDO',
+        token: senha,
+        acao: 'Login do Comando realizado com sucesso',
+        detalhes: `Corporação: ${cfg.nome} • Chave: ${senha}`
+      });
+
+      iniciarSistemaLogado();
+      showToast(`Comando liberado para ${usuario} (${cfg.nome})`);
+    };
+
+    window.logarEfetivoExistente = async function(e) {
+      e.preventDefault();
+      corpAtual = normalizarCorporacao(corpAtual);
+      const nomeInformado = (document.getElementById('login-rapido-nome').value || '').toUpperCase().trim();
+      const tokenDigitado = (document.getElementById('login-rapido-token').value || '').toUpperCase().trim();
+
+      if (!tokenDigitado || tokenDigitado.length !== 10) {
+        await registrarEventoAuditoria({
+          corp: corpAtual,
+          categoria: 'LOGIN_FALHA',
+          nome: nomeInformado || 'NÃO INFORMADO',
+          patente: 'EFETIVO',
+          token: tokenDigitado,
+          acao: 'Entrada mal-sucedida na Área de Efetivo',
+          detalhes: `Token obrigatório precisa ter exatamente 10 caracteres (informado: ${tokenDigitado.length}).`
+        });
+        notificarAviso("O Token individual precisa ter exatamente 10 caracteres.");
+        return;
+      }
+
+      let baseMembros = [...membros];
+      let baseCandidatos = [...candidatos];
+
+      if (firebaseConfigValido) {
+        try {
+          const snapCorp = await getDocs(query(collection(db, 'membros'), where('corporacao', '==', corpAtual)));
+          if (!snapCorp.empty) {
+            baseMembros = snapCorp.docs.map(d => ({ id: d.id, ...d.data() }));
+          }
+          const snapCand = await getDocs(query(collection(db, 'candidaturas'), where('corporacao', '==', corpAtual)));
+          if (!snapCand.empty) {
+            baseCandidatos = snapCand.docs.map(d => ({ id: d.id, ...d.data() }));
+          }
+        } catch (err) {}
+      }
+
+      const registroPorToken = baseMembros.find(
+        d => normalizarCorporacao(d.corporacao) === corpAtual &&
+             (d.tokenAcesso || '').toUpperCase().trim() === tokenDigitado
+      );
+
+      if (!registroPorToken) {
+        const candMatch = baseCandidatos.find(
+          c => normalizarCorporacao(c.corporacao) === corpAtual &&
+               (c.tokenAcesso || '').toUpperCase().trim() === tokenDigitado
+        );
+        const motivoFalha = candMatch
+          ? "Candidato ainda não admitido no efetivo da corporação."
+          : `Token "${tokenDigitado}" de 10 caracteres não encontrado nesta corporação.`;
+
+        await registrarEventoAuditoria({
+          corp: corpAtual,
+          categoria: 'LOGIN_FALHA',
+          nome: nomeInformado || 'NÃO INFORMADO',
+          patente: 'EFETIVO',
+          token: tokenDigitado,
+          acao: 'Entrada mal-sucedida na Área de Efetivo',
+          detalhes: motivoFalha
+        });
+        notificarAviso(`Acesso negado: ${motivoFalha}`);
+        return;
+      }
+
+      if (registroPorToken.motivoExonere) {
+        await registrarEventoAuditoria({
+          corp: corpAtual,
+          categoria: 'LOGIN_FALHA',
+          membroId: registroPorToken.id,
+          nome: nomeInformado || registroPorToken.nome,
+          patente: registroPorToken.patente,
+          token: tokenDigitado,
+          acao: 'Tentativa de login de membro exonerado (no Limbo)',
+          detalhes: `Membro está no limbo (${registroPorToken.motivoExonere}). Somente o Alto Comando pode retirar.`
+        });
+        notificarAviso(`Membro no limbo (${registroPorToken.motivoExonere}). Só o Alto Comando pode retirar.`);
+        return;
+      }
+
+      const nomeCadastrado = (registroPorToken.nome || '').toUpperCase().trim();
+      const nomeDivergente = Boolean(nomeInformado && nomeCadastrado && nomeInformado !== nomeCadastrado);
+
+      modoAcesso = 'efetivo';
+      usuarioLogado = registroPorToken;
+      statusCadastroMensagem = nomeDivergente
+        ? `Logado pelo Token [${registroPorToken.tokenAcesso}] como ${nomeCadastrado} (nome digitado "${nomeInformado}" divergente/erro gráfico registrado)`
+        : `Logado como [${registroPorToken.patente}] ${registroPorToken.nome} • Token: ${registroPorToken.tokenAcesso}`;
+
+      salvarPersistente('rp_modo_acesso', modoAcesso);
+      salvarJsonPersistente('rp_usuario_logado', usuarioLogado);
+      salvarPersistente('rp_status_cadastro_msg', statusCadastroMensagem);
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'LOGIN_SUCESSO',
+        membroId: registroPorToken.id,
+        nome: nomeInformado || nomeCadastrado,
+        patente: registroPorToken.patente,
+        token: registroPorToken.tokenAcesso,
+        acao: nomeDivergente
+          ? 'Entrada pelo token com divergência/erro gráfico no nome (pseudo-requisito)'
+          : 'Entrada bem-sucedida na Área de Efetivo',
+        detalhes: nomeDivergente
+          ? `Token válido de ${nomeCadastrado}, mas foi digitado "${nomeInformado}" • Setor/Turno: ${registroPorToken.qth}`
+          : `Setor/Turno: ${registroPorToken.qth} • Corporação: ${CORPORACOES[corpAtual].nome}`
+      });
+
+      iniciarSistemaLogado();
+      switchTab('ponto');
+      showToast(statusCadastroMensagem);
+    };
+
+    window.inscreverCandidatoCorporacao = async function(e) {
+      e.preventDefault();
+      corpAtual = normalizarCorporacao(corpAtual);
+      const patente = document.getElementById('insc-efetivo-patente').value;
+      const qth = document.getElementById('insc-efetivo-setor').value.toUpperCase().trim();
+      const nome = document.getElementById('insc-efetivo-nome').value.toUpperCase().trim();
+      let discord = document.getElementById('insc-efetivo-discord').value.trim();
+      if (discord && !discord.startsWith('@')) discord = '@' + discord;
+      const veiculo = document.getElementById('insc-efetivo-veiculo').value.toUpperCase().trim() || 'VEÍCULO';
+      const tokenAcesso = gerarTokenUnico10(coletarTokensExistentes());
+      const candId = gerarIdUnico('cand', corpAtual, tokenAcesso);
+      const ciclo120 = criarCamposCiclo120Dias(Date.now(), DIAS_GESTAO);
+
+      const novoCand = {
+        id: candId,
+        corporacao: corpAtual,
+        nome,
+        patente,
+        qth,
+        discord,
+        veiculo,
+        tokenAcesso,
+        status: 'CANDIDATO',
+        ...ciclo120
+      };
+
+      candidatos = [novoCand, ...candidatos];
+      persistirCachesLocais();
+      renderizarCandidatos();
+
+      if (firebaseConfigValido) {
+        try {
+          await setDoc(doc(db, 'candidaturas', candId), {
+            ...novoCand,
+            criadoEm: serverTimestamp()
+          }, { merge: true });
+        } catch (err) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        nome,
+        patente,
+        token: tokenAcesso,
+        acao: 'Inscrição enviada na corporação (ciclo 120 dias)',
+        detalhes: `Setor/Turno pretendido: ${qth} • Discord: ${discord}`
+      });
+
+      e.target.reset();
+      document.getElementById('insc-efetivo-setor').value = CORPORACOES[corpAtual].setorPadrao;
+      document.getElementById('valor-token-recem-gerado').textContent = tokenAcesso;
+      document.getElementById('box-token-recem-gerado').classList.remove('hidden');
+      showToast(`Inscrição enviada! Token de 10 caracteres: ${tokenAcesso}`);
+    };
+
+    window.efetuarLogout = async function() {
+      const corpLogout = normalizarCorporacao(usuarioLogado?.corporacao || corpAtual);
+      if (usuarioLogado?.nome) {
+        await registrarEventoAuditoria({
+          corp: corpLogout,
+          categoria: 'ATIVIDADE',
+          membroId: usuarioLogado.id || '',
+          nome: usuarioLogado.nome,
+          patente: usuarioLogado.patente || '',
+          token: usuarioLogado.tokenAcesso || '',
+          acao: 'Saiu do sistema (Logout)',
+          detalhes: `Perfil: ${modoAcesso || '---'}`
+        });
+      }
+
+      unsubscribers.forEach(u => u());
+      unsubscribers = [];
+      if (intervaloTimerHp) clearInterval(intervaloTimerHp);
+      sessionStorage.clear();
+      try {
+        localStorage.removeItem('rp_modo_acesso');
+        localStorage.removeItem('rp_usuario_logado');
+        localStorage.removeItem('rp_corp_escolhida_portal');
+        localStorage.removeItem('rp_status_cadastro_msg');
+        localStorage.removeItem('rp_turno_ativo_id');
+      } catch {}
+      modoAcesso = null;
+      usuarioLogado = null;
+      statusCadastroMensagem = '';
+      corpEscolhidaNoPortal = false;
+      document.getElementById('app-container').classList.add('hidden');
+      document.getElementById('portal-inicial').classList.remove('hidden');
+      atualizarVisibilidadePortal();
+      voltarParaEfetivoPortal();
+    };
+
+    function inicializarDatasPeriodoPadrao() {
+      const ini = document.getElementById('rel-data-inicio');
+      const fim = document.getElementById('rel-data-fim');
+      const hoje = hojeIsoLocal();
+      if (ini && !ini.value) {
+        const d7 = new Date(Date.now() - 6 * 86400000);
+        ini.value = hojeIsoLocal(d7.getTime());
+      }
+      if (fim && !fim.value) {
+        fim.value = hoje;
+      }
+    }
+
+    function obterTurnoAtualHP() {
+      const slotsHP = CORPORACOES.SIST_HP.slotsLabels;
+      const ativosMesclados = mesclarPontosAtivosComLocal();
+      const meuTurno = ativosMesclados.find(p => p.membroId === usuarioLogado?.id);
+      if (meuTurno?.turnoQth && slotsHP.includes(meuTurno.turnoQth)) {
+        return meuTurno.turnoQth;
+      }
+      if (usuarioLogado?.qth && slotsHP.includes(usuarioLogado.qth)) {
+        return usuarioLogado.qth;
+      }
+      if (slotsHP.includes(turnoQthSelecionado)) {
+        return turnoQthSelecionado;
+      }
+      return slotsHP[0];
+    }
+
+    function renderizarCincoBotoesTurnoHP() {
+      const container = document.getElementById('hp-cinco-botoes-turno');
+      if (!container) return;
+
+      const slotsHP = CORPORACOES.SIST_HP.slotsLabels;
+      const ativosMesclados = mesclarPontosAtivosComLocal();
+      const meuTurno = ativosMesclados.find(p => p.membroId === usuarioLogado?.id);
+      const turnoAtual = obterTurnoAtualHP();
+
+      container.innerHTML = slotsHP.map(turnoNome => {
+        const estaEmTurnoNeste = meuTurno?.turnoQth === turnoNome;
+        const ehTurnoAtual = turnoAtual === turnoNome;
+
+        let estiloBtn = 'border-slate-700 bg-slate-950 text-slate-300 hover:border-red-500/60';
+        let subLabel = 'Definir Turno (QTH)';
+
+        if (estaEmTurnoNeste) {
+          estiloBtn = 'border-emerald-400 bg-emerald-600/25 text-emerald-200 shadow-md';
+          subLabel = '● Em Ponto Agora';
+        } else if (ehTurnoAtual) {
+          estiloBtn = 'border-red-500 bg-red-600 text-white';
+          subLabel = '★ Turno Atual';
+        }
+
+        return `
+          <button type="button" onclick="selecionarTurnoIdentificacaoHP('${turnoNome}')"
+            class="px-2.5 py-2.5 rounded-xl border ${estiloBtn} transition flex flex-col items-center justify-center gap-0.5 text-center">
+            <span class="text-[11px] font-extrabold tracking-wide">${turnoNome}</span>
+            <span class="text-[10px] font-mono opacity-90">${subLabel}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    window.selecionarTurnoIdentificacaoHP = async function(turnoNome) {
+      if (modoAcesso !== 'efetivo' || corpAtual !== 'SIST_HP') return;
+
+      const meuTurno = mesclarPontosAtivosComLocal().find(p => p.membroId === usuarioLogado.id);
+      if (meuTurno) {
+        showToast(`Seu turno em andamento é ${meuTurno.turnoQth}. Use o bloco do Turno Atual para finalizar o ponto.`);
+        return;
+      }
+
+      turnoQthSelecionado = turnoNome;
+      salvarPersistente('rp_hp_qth_turno', turnoNome);
+      usuarioLogado = { ...usuarioLogado, qth: turnoNome };
+      salvarJsonPersistente('rp_usuario_logado', usuarioLogado);
+
+      membros = membros.map(m => m.id === usuarioLogado.id ? { ...m, qth: turnoNome } : m);
+      persistirCachesLocais();
+
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'membros', usuarioLogado.id), { qth: turnoNome });
+        } catch (e) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        token: usuarioLogado.tokenAcesso || '',
+        acao: `Turno de identificação (QTH) definido para ${turnoNome}`,
+        detalhes: `Turno atual pronto para iniciar/finalizar ponto: ${turnoNome}`
+      });
+
+      renderizarCincoBotoesTurnoHP();
+      atualizarInterfaceTimerHP();
+      renderizarTabelas();
+      showToast(`Turno (QTH) definido como ${turnoNome}. Use o bloco do Turno Atual para bater o ponto.`);
+    };
+
+    function atualizarInfoCicloEfetivoBanner(m) {
+      const elCiclo = document.getElementById('meu-ciclo-efetivo-display');
+      if (!elCiclo || !m) return;
+      const diasRest = obterDiasRestantesCiclo(m);
+      const fimBR = formatarFimCicloBR(m);
+      elCiclo.textContent = estaCicloExpirado(m.cicloFimMs || m.expiraEm)
+        ? `Ciclo 120d expirado (até ${fimBR})`
+        : `Ciclo 120d: ${diasRest}d restantes (até ${fimBR})`;
+    }
+
+    function iniciarSistemaLogado() {
+      corpAtual = normalizarCorporacao(corpAtual);
+      aplicarTemaCorporacao(corpAtual);
+      document.getElementById('portal-inicial').classList.add('hidden');
+      document.getElementById('app-container').classList.remove('hidden');
+
+      const cfg = CORPORACOES[corpAtual];
+      const isComando = modoAcesso === 'comando';
+      const isHP = corpAtual === 'SIST_HP';
+
+      document.getElementById('header-corp-titulo').textContent = cfg.nome;
+      document.getElementById('user-display-name').textContent = usuarioLogado.nome;
+      document.getElementById('user-display-role').textContent = isComando
+        ? `${usuarioLogado.patente} • ${cfg.nome}`
+        : `[${usuarioLogado.patente}] • ${usuarioLogado.qth}`;
+
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isComando));
+      document.getElementById('banner-efetivo-exclusivo').classList.toggle('hidden', isComando);
+      document.getElementById('card-enviar-justificativa').classList.toggle('hidden', isComando);
+      document.getElementById('label-tab-efetivo').textContent = isComando ? 'Efetivo & Balanço' : 'Minha Ficha & Turnos';
+      document.getElementById('label-tab-ponto').textContent = isHP ? 'Ponto Turno (QTH)' : 'Ponto & Turnos';
+      document.getElementById('th-qth-turno').textContent = isHP ? 'Turno (QTH)' : 'Setor (QTH)';
+      document.getElementById('titulo-resumo-qth').textContent = isHP
+        ? 'Distribuição por Turno / QTH (Clique para filtrar)'
+        : 'Distribuição por Setor / QTH (Clique para filtrar)';
+      document.getElementById('th-slots-titulo').textContent = cfg.slotsLabels.join(' • ');
+      document.getElementById('titulo-aba-candidatos').textContent = `Candidatos • ${cfg.nome}`;
+
+      document.getElementById('painel-ponto-hp').classList.toggle('hidden', !(isHP && !isComando));
+      document.getElementById('controles-ponto-efetivo').classList.toggle('hidden', isHP || isComando);
+
+      if (!isComando) {
+        if (isHP) {
+          turnoQthSelecionado = obterTurnoAtualHP();
+          salvarPersistente('rp_hp_qth_turno', turnoQthSelecionado);
+        }
+        document.getElementById('texto-aviso-cadastro').textContent =
+          statusCadastroMensagem || `Você já está cadastrado e logado como [${usuarioLogado.patente}] ${usuarioLogado.nome} (${cfg.nome}).`;
+        document.getElementById('meu-token-efetivo-display').textContent = usuarioLogado.tokenAcesso || 'SEM-TOKEN';
+        atualizarInfoCicloEfetivoBanner(usuarioLogado);
+      } else {
+        inicializarDatasPeriodoPadrao();
+      }
+
+      const inputEquipe = document.getElementById('hp-nome-equipe');
+      if (inputEquipe) inputEquipe.value = equipeHpAtual;
+
+      const boxTurnos = document.getElementById('checkboxes-turnos-just');
+      boxTurnos.innerHTML = cfg.slotsLabels.map((lbl, idx) => `
+        <label class="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-200 cursor-pointer px-2.5 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-amber-400/60">
+          <input type="checkbox" name="just-boxes" value="${idx}" class="accent-yellow-400 w-3.5 h-3.5"> ${lbl}
+        </label>
+      `).join('');
+
+      preencherSelectsCorporacao();
+      if (!isComando) {
+        document.getElementById('macro-patente-aba').value = usuarioLogado.patente;
+        document.getElementById('macro-nome-aba').value = usuarioLogado.nome;
+        document.getElementById('macro-setor-aba').value = usuarioLogado.qth;
+        document.getElementById('macro-veiculo-aba').value = usuarioLogado.veiculo || '';
+      }
+
+      atualizarFiltrosEResumosComando();
+      renderizarTabelas();
+      renderizarCandidatos();
+      renderizarCincoBotoesTurnoHP();
+      atualizarInterfaceTimerHP();
+      renderizarPainelPonto(mesclarPontosAtivosComLocal(), historicoLocalEncerrados);
+      gerarMacrosPersonalizadas();
+      renderizarAuditoria();
+      conectarListenersFirestore();
+    }
+
+    function conectarListenersFirestore() {
+      unsubscribers.forEach(u => u());
+      unsubscribers = [];
+      if (!firebaseConfigValido) return;
+
+      const qMembros = query(collection(db, 'membros'), where('corporacao', '==', corpAtual));
+      unsubscribers.push(onSnapshot(qMembros, snap => {
+        membros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        persistirCachesLocais();
+        if (modoAcesso === 'efetivo') {
+          const eu = membros.find(m => m.id === usuarioLogado.id || (m.tokenAcesso && m.tokenAcesso === usuarioLogado.tokenAcesso));
+          if (eu) {
+            if (eu.motivoExonere) {
+              notificarAviso(`Sua conta foi movida para o limbo/exonerados (${eu.motivoExonere}). Somente o Alto Comando pode retirar.`);
+              efetuarLogout();
+              return;
+            }
+            usuarioLogado = eu;
+            salvarJsonPersistente('rp_usuario_logado', usuarioLogado);
+            document.getElementById('meu-token-efetivo-display').textContent = eu.tokenAcesso || 'SEM-TOKEN';
+            atualizarInfoCicloEfetivoBanner(eu);
+            if (!statusCadastroMensagem) {
+              document.getElementById('texto-aviso-cadastro').textContent =
+                `Você já está cadastrado e logado como [${eu.patente}] ${eu.nome}.`;
+            }
+          }
+        }
+        atualizarFiltrosEResumosComando();
+        renderizarTabelas();
+        renderizarDesempenhoGeral();
+      }));
+
+      const qCandidatos = query(collection(db, 'candidaturas'), where('corporacao', '==', corpAtual));
+      unsubscribers.push(onSnapshot(qCandidatos, snap => {
+        candidatos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        persistirCachesLocais();
+        renderizarCandidatos();
+      }));
+
+      const qPonto = query(collection(db, 'ponto'), where('corporacao', '==', corpAtual), orderBy('criadoEm', 'desc'), limit(100));
+      unsubscribers.push(onSnapshot(qPonto, snap => {
+        const todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        pontosAtivos = todos.filter(p => p.status === 'QRV');
+        pontosEncerradosFirestore = todos.filter(p => p.status === 'QTX');
+
+        if (modoAcesso === 'efetivo' && usuarioLogado?.id) {
+          const meuAtivoFs = pontosAtivos.find(p => p.membroId === usuarioLogado.id);
+          const meuLocal = obterTurnoLocalAberto(usuarioLogado.id);
+          if (meuAtivoFs) {
+            salvarTurnoLocalAberto({
+              docId: meuAtivoFs.id,
+              corporacao: corpAtual,
+              membroId: usuarioLogado.id,
+              nome: meuAtivoFs.nome || usuarioLogado.nome,
+              patente: meuAtivoFs.patente || usuarioLogado.patente,
+              setor: meuAtivoFs.setor || meuAtivoFs.turnoQth || usuarioLogado.qth,
+              turnoQth: meuAtivoFs.turnoQth || meuLocal?.turnoQth || obterTurnoAtualHP(),
+              equipe: meuAtivoFs.equipe || meuLocal?.equipe || equipeHpAtual,
+              status: 'QRV',
+              dataIso: meuAtivoFs.dataIso || hojeIsoLocal(meuAtivoFs.inicioMs),
+              horaEntrada: meuAtivoFs.horaEntrada || meuLocal?.horaEntrada || formatarHoraCelular(meuAtivoFs.inicioMs),
+              inicioMs: meuAtivoFs.inicioMs || meuLocal?.inicioMs || Date.now()
+            }, usuarioLogado.id);
+          }
+        }
+
+        const combinadosAtivos = mesclarPontosAtivosComLocal();
+        const encerradosCombinados = [...pontosEncerradosFirestore, ...historicoLocalEncerrados].filter(
+          (item, idx, arr) => arr.findIndex(x => (x.id && item.id && x.id === item.id) || (x.inicioMs && x.inicioMs === item.inicioMs && x.membroId === item.membroId)) === idx
+        );
+
+        document.getElementById('stat-em-turno').textContent = combinadosAtivos.length;
+        renderizarPainelPonto(combinadosAtivos, encerradosCombinados);
+        renderizarCincoBotoesTurnoHP();
+        atualizarInterfaceTimerHP();
+        renderizarTabelas();
+        renderizarDesempenhoGeral();
+      }));
+
+      const qJust = query(collection(db, 'justificativas'), where('corporacao', '==', corpAtual), orderBy('criadoEm', 'desc'), limit(50));
+      unsubscribers.push(onSnapshot(qJust, snap => {
+        renderizarJustificativas(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }));
+
+      const qFerias = query(collection(db, 'ferias'), where('corporacao', '==', corpAtual), orderBy('criadoEm', 'desc'), limit(30));
+      unsubscribers.push(onSnapshot(qFerias, snap => {
+        renderizarFerias(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }));
+
+      const qAvisos = query(collection(db, 'avisos'), where('corporacao', '==', corpAtual), orderBy('criadoEm', 'desc'), limit(20));
+      unsubscribers.push(onSnapshot(qAvisos, snap => {
+        renderizarAvisos(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }));
+
+      const qAud = query(collection(db, 'auditoria_acessos'), where('corporacao', '==', corpAtual), orderBy('criadoMs', 'desc'), limit(150));
+      unsubscribers.push(onSnapshot(qAud, snap => {
+        registrosAuditoriaFirestore = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizarAuditoria();
+      }));
+    }
+
+    // RENOVAR CICLO DE 120 DIAS DO MEMBRO
+    window.renovarCicloMembro120 = async function(id) {
+      if (modoAcesso !== 'comando') return;
+      const m = membros.find(x => x.id === id);
+      if (!m) return;
+
+      const novoCiclo = criarCamposCiclo120Dias(Date.now(), DIAS_GESTAO);
+      membros = membros.map(item => item.id === id ? { ...item, ...novoCiclo } : item);
+      persistirCachesLocais();
+      renderizarTabelas();
+
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'membros', id), {
+            ...novoCiclo,
+            atualizadoEm: serverTimestamp()
+          });
+        } catch (e) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: id,
+        nome: m.nome,
+        patente: m.patente,
+        token: m.tokenAcesso || '',
+        acao: `Renovou ciclo de gestão (${DIAS_GESTAO} dias)`,
+        detalhes: `Novo vencimento: ${formatarDataBR(novoCiclo.cicloFimMs)} • Por: ${usuarioLogado.nome}`
+      });
+
+      showToast(`Ciclo de ${DIAS_GESTAO} dias renovado para ${m.nome}!`);
+    };
+
+    // EDIÇÃO COMPLETA PELO COMANDO
+    window.abrirModalEditarMembro = function(membroId) {
+      if (modoAcesso !== 'comando') return;
+      const m = membros.find(x => x.id === membroId);
+      if (!m) return;
+
+      document.getElementById('edit-membro-id').value = m.id;
+      document.getElementById('edit-membro-nome').value = m.nome || '';
+      document.getElementById('edit-membro-discord').value = m.discord || '';
+      document.getElementById('edit-membro-patente').value = m.patente || CORPORACOES[corpAtual].patentes[0];
+      document.getElementById('edit-membro-qth').value = m.qth || '';
+      document.getElementById('edit-membro-veiculo').value = m.veiculo || '';
+      document.getElementById('edit-membro-token').value = m.tokenAcesso || gerarTokenUnico10(coletarTokensExistentes());
+      editSlotsTemp = [...(m.boxes || ['neutro','neutro','neutro','neutro','neutro'])];
+
+      renderizarSlotsModalEdicao();
+      document.getElementById('modal-editar-membro').classList.remove('hidden');
+    };
+
+    window.fecharModalEditarMembro = function() {
+      document.getElementById('modal-editar-membro').classList.add('hidden');
+    };
+
+    function renderizarSlotsModalEdicao() {
+      const slotsLabels = CORPORACOES[corpAtual].slotsLabels;
+      const container = document.getElementById('edit-membro-slots');
+      if (!container) return;
+      container.innerHTML = editSlotsTemp.map((cor, idx) => `
+        <button type="button" onclick="ciclarSlotModal(${idx})"
+          class="px-2 py-2 rounded-lg text-[10px] font-bold box-presenca-${cor} transition">
+          ${slotsLabels[idx] || (idx + 1)} (${cor.toUpperCase()})
+        </button>
+      `).join('');
+    }
+
+    window.ciclarSlotModal = function(idx) {
+      const prox = CICLO_CORES[(CICLO_CORES.indexOf(editSlotsTemp[idx]) + 1) % CICLO_CORES.length];
+      editSlotsTemp[idx] = prox;
+      renderizarSlotsModalEdicao();
+    };
+
+    window.salvarEdicaoMembroComando = async function(e) {
+      e.preventDefault();
+      if (modoAcesso !== 'comando') return;
+      const id = document.getElementById('edit-membro-id').value;
+      const m = membros.find(x => x.id === id);
+      if (!m) return;
+
+      const nome = document.getElementById('edit-membro-nome').value.toUpperCase().trim();
+      let discord = document.getElementById('edit-membro-discord').value.trim();
+      if (discord && !discord.startsWith('@')) discord = '@' + discord;
+      const patente = document.getElementById('edit-membro-patente').value;
+      const qth = document.getElementById('edit-membro-qth').value.toUpperCase().trim();
+      const veiculo = document.getElementById('edit-membro-veiculo').value.toUpperCase().trim() || 'VEÍCULO';
+      const tokenAcesso = (document.getElementById('edit-membro-token').value || '').toUpperCase().trim() || m.tokenAcesso || gerarTokenUnico10(coletarTokensExistentes());
+
+      const slotDatas = { ...(m.slotDatas || {}) };
+      const hoje = hojeIsoLocal();
+      editSlotsTemp.forEach((cor, idx) => {
+        if ((m.boxes || [])[idx] !== cor && cor !== 'neutro') {
+          slotDatas[idx] = hoje;
+        }
+      });
+
+      const atualizado = { ...m, nome, discord, patente, qth, veiculo, tokenAcesso, boxes: editSlotsTemp, slotDatas };
+      membros = membros.map(item => item.id === id ? atualizado : item);
+      persistirCachesLocais();
+      atualizarFiltrosEResumosComando();
+      renderizarTabelas();
+      renderizarDesempenhoGeral();
+
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'membros', id), {
+            nome, discord, patente, qth, veiculo, tokenAcesso, boxes: editSlotsTemp, slotDatas, atualizadoEm: serverTimestamp()
+          });
+        } catch (err) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: id,
+        nome,
+        patente,
+        token: tokenAcesso,
+        acao: 'Ficha do membro editada pelo Comando',
+        detalhes: `Patente: ${patente} • QTH/Turno: ${qth} • Slots: ${editSlotsTemp.join(', ')}`
+      });
+
+      fecharModalEditarMembro();
+      showToast(`Ficha de ${nome} atualizada pelo Comando!`);
+    };
+
+    // DOCUMENTO DE PRESENÇA E FALTA POR PERÍODO
+    window.gerarDocumentoPeriodo = function() {
+      if (modoAcesso !== 'comando') return;
+      const dataIni = document.getElementById('rel-data-inicio').value;
+      const dataFim = document.getElementById('rel-data-fim').value;
+      const escopo = document.getElementById('rel-escopo').value;
+
+      if (!dataIni || !dataFim) {
+        notificarAviso("Escolha a Data Inicial (Data X) e a Data Final (Data Y).");
+        return;
+      }
+      if (dataIni > dataFim) {
+        notificarAviso("A Data Inicial (Data X) não pode ser maior que a Data Final (Data Y).");
+        return;
+      }
+
+      const cfg = CORPORACOES[corpAtual];
+      const hoje = hojeIsoLocal();
+      const ativos = membros.filter(m => !m.motivoExonere);
+      const todosPontos = [...pontosAtivos, ...pontosEncerradosFirestore, ...historicoLocalEncerrados].filter(
+        (item, idx, arr) => arr.findIndex(x => (x.id && item.id && x.id === item.id) || (x.inicioMs && x.inicioMs === item.inicioMs && x.membroId === item.membroId)) === idx
+      );
+
+      const linhasMembros = [];
+      let totalPresencasGeral = 0;
+      let totalJustGeral = 0;
+      let totalFaltasGeral = 0;
+      let totalFeriasGeral = 0;
+
+      ativos.forEach(m => {
+        const boxes = m.boxes || ['neutro','neutro','neutro','neutro','neutro'];
+        const slotDatas = m.slotDatas || {};
+
+        const pontosDoMembro = todosPontos
+          .filter(p => p.membroId === m.id)
+          .sort((a, b) => (b.inicioMs || 0) - (a.inicioMs || 0));
+
+        const ultimoPonto = pontosDoMembro[0] || null;
+        const ultimoPontoValidoOuCumprido = Boolean(
+          ultimoPonto && (ultimoPonto.status === 'QRV' || ultimoPonto.status === 'QTX' || ultimoPonto.horaSaida || ultimoPonto.inicioMs)
+        );
+
+        const pontosConsiderados = pontosDoMembro.filter((p, idx) => {
+          const dIso = p.dataIso || (p.inicioMs ? hojeIsoLocal(p.inicioMs) : hoje);
+          const dentroPeriodo = dIso >= dataIni && dIso <= dataFim;
+          const ehHoje = dIso === hoje;
+          const ehUltimoRecenteCumprido = idx === 0 && ultimoPontoValidoOuCumprido;
+          return dentroPeriodo || ehHoje || ehUltimoRecenteCumprido;
+        });
+
+        let presencas = 0;
+        let just = 0;
+        let faltas = 0;
+        let ferias = 0;
+        const detalhesSlots = [];
+
+        boxes.forEach((cor, idx) => {
+          if (cor === 'neutro') return;
+          const dtSlot = slotDatas[idx] || '';
+          const dentroPeriodo = dtSlot ? (dtSlot >= dataIni && dtSlot <= dataFim) : false;
+          const ehHoje = dtSlot === hoje;
+          const eventoRecenteCumprido = !dtSlot && (cor === 'verde' || cor === 'amarelo' || cor === 'azul');
+
+          if (!dentroPeriodo && !ehHoje && !eventoRecenteCumprido) return;
+
+          const rotulo = cfg.slotsLabels[idx] || `Slot ${idx + 1}`;
+          const origemTag = dentroPeriodo ? '' : (ehHoje ? ' [HOJE]' : ' [PERÍODO ANTERIOR / RECENTE]');
+          if (cor === 'verde') {
+            presencas++;
+            detalhesSlots.push(`${rotulo}: PRESENTE (🟢)${origemTag}`);
+          } else if (cor === 'amarelo') {
+            just++;
+            detalhesSlots.push(`${rotulo}: JUSTIFICADO (🟡)${origemTag}`);
+          } else if (cor === 'vermelho') {
+            faltas++;
+            detalhesSlots.push(`${rotulo}: FALTA (🟥)${origemTag}`);
+          } else if (cor === 'azul') {
+            ferias++;
+            detalhesSlots.push(`${rotulo}: FÉRIAS (🔵)${origemTag}`);
+          }
+        });
+
+        const pontosConcluidos = pontosConsiderados.filter(p => p.status === 'QTX' || p.horaSaida || p.status === 'QRV').length;
+        if (pontosConcluidos > presencas) {
+          presencas = pontosConcluidos;
+        }
+
+        const semRegistroNoPeriodo = (presencas + just + faltas + ferias) === 0;
+        const situacaoPeriodo = ferias > 0 && presencas === 0
+          ? 'LICENÇA / FÉRIAS'
+          : (presencas > 0 ? 'COM PRESENÇA' : (just > 0 ? 'AUSÊNCIA JUSTIFICADA' : 'FALTA / SEM PRESENÇA'));
+
+        if (escopo === 'FALTOSOS' && !(faltas > 0 || semRegistroNoPeriodo)) return;
+        if (escopo === 'PRESENTES' && !(presencas > 0 || pontosConsiderados.length > 0)) return;
+
+        totalPresencasGeral += presencas;
+        totalJustGeral += just;
+        totalFaltasGeral += faltas;
+        totalFeriasGeral += ferias;
+
+        const mt = calcularMetricasMembro(m);
+        linhasMembros.push(
+`• [${m.patente}] ${m.nome} (${m.qth}) ${m.discord || ''} | Token: ${m.tokenAcesso || '---'}
+  Situação: ${situacaoPeriodo} | Score: ${mt.score} pts | Ciclo 120d: ${obterDiasRestantesCiclo(m)}d restantes
+  Presenças (🟢): ${presencas} | Justificadas (🟡): ${just} | Faltas (🟥): ${faltas} | Férias (🔵): ${ferias} | Pontos/Eventos: ${pontosConsiderados.length}` +
+  (detalhesSlots.length ? `\n  Registros: ${detalhesSlots.join(' | ')}` : '')
+        );
+      });
+
+      const documento =
+`============================================================
+RELATÓRIO OFICIAL DE FREQUÊNCIA E PRESENÇA — ${cfg.nome}
+Período Base: ${dataIni} até ${dataFim} (inclui HOJE / último ponto ou evento recente cumprido)
+Escopo: ${escopo}
+Emitido por: ${usuarioLogado?.nome || 'COMANDO'} em ${hoje} às ${formatarHoraCelular()}
+============================================================
+RESUMO DO PERÍODO
+- Membros Listados: ${linhasMembros.length}
+- Total Presenças (🟢): ${totalPresencasGeral}
+- Total Justificadas (🟡): ${totalJustGeral}
+- Total Faltas (🟥): ${totalFaltasGeral}
+- Total Férias (🔵): ${totalFeriasGeral}
+============================================================
+
+${linhasMembros.join('\n\n') || 'Nenhum registro encontrado para o filtro selecionado neste período.'}
+`;
+
+      ultimoDocumentoPeriodoTexto = documento;
+      document.getElementById('resumo-periodo-texto').textContent =
+        `Período ${dataIni} → ${dataFim} (+ hoje/recente) • ${linhasMembros.length} membro(s) • 🟢 ${totalPresencasGeral} | 🟨 ${totalJustGeral} | 🟥 ${totalFaltasGeral} | 🔵 ${totalFeriasGeral}`;
+      document.getElementById('conteudo-documento-periodo').textContent = documento;
+      document.getElementById('box-documento-periodo').classList.remove('hidden');
+      showToast("Documento do período calculado e gerado!");
+    };
+
+    window.copiarDocumentoPeriodo = function() {
+      if (!ultimoDocumentoPeriodoTexto) return;
+      navigator.clipboard.writeText(ultimoDocumentoPeriodoTexto);
+      showToast("Documento copiado para a área de transferência!");
+    };
+
+    window.baixarDocumentoPeriodoTxt = function() {
+      if (!ultimoDocumentoPeriodoTexto) return;
+      const ini = document.getElementById('rel-data-inicio').value || 'inicio';
+      const fim = document.getElementById('rel-data-fim').value || 'fim';
+      const blob = new Blob([ultimoDocumentoPeriodoTexto], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio-frequencia-${corpAtual}-${ini}-a-${fim}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Arquivo .TXT baixado!");
+    };
+
+    window.imprimirDocumentoPeriodo = function() {
+      if (!ultimoDocumentoPeriodoTexto) return;
+      const win = window.open('', '_blank');
+      if (!win) {
+        notificarAviso("Permita pop-ups para imprimir/salvar em PDF.");
+        return;
+      }
+      win.document.write(`<pre style="font-family:monospace;white-space:pre-wrap;padding:20px;">${ultimoDocumentoPeriodoTexto}</pre>`);
+      win.document.close();
+      win.print();
+    };
+
+    // CANDIDATOS
+    function renderizarCandidatos() {
+      const container = document.getElementById('lista-candidatos-corporacao');
+      const badge = document.getElementById('badge-qtd-candidatos');
+      const contador = document.getElementById('contador-candidatos-lista');
+      if (!container) return;
+
+      const pendentes = candidatos.filter(c => normalizarCorporacao(c.corporacao) === corpAtual && c.status !== 'APROVADO');
+      if (badge) badge.textContent = pendentes.length;
+      if (contador) contador.textContent = `${pendentes.length} candidato(s)`;
+
+      if (!pendentes.length) {
+        container.innerHTML = `<p class="text-xs text-slate-500 col-span-full py-6 text-center">Nenhum candidato inscrito nesta corporação no momento.</p>`;
+        return;
+      }
+
+      const isComando = modoAcesso === 'comando';
+      container.innerHTML = pendentes.map(c => {
+        const tokenCard = c.tokenAcesso || '----------';
+        return `
+          <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-amber-500/15 text-amber-300">CANDIDATO</span>
+                <div class="text-sm font-bold text-white mt-1">[${c.patente}] ${c.nome}</div>
+              </div>
+              <span class="text-xs font-mono theme-accent-text font-bold">${c.qth}</span>
+            </div>
+            <div class="text-xs font-mono text-indigo-400">${c.discord || ''}</div>
+            <div class="flex items-center justify-between gap-2 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5">
+              <span class="text-[11px] font-mono font-bold theme-accent-text tracking-wider">Token: ${tokenCard}</span>
+              <button type="button" onclick="copiarTextoToken('${tokenCard}')" class="text-[10px] px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-white rounded font-bold">Copiar</button>
+            </div>
+            ${isComando ? `
+              <div class="flex gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onclick="aprovarCandidato('${c.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg">Admitir (120d)</button>
+                <button type="button" onclick="removerCandidato('${c.id}')" class="px-3 py-1.5 bg-red-950 hover:bg-red-800 text-red-300 text-xs font-bold rounded-lg">Recusar</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.aprovarCandidato = async function(candId) {
+      if (modoAcesso !== 'comando') return;
+      const c = candidatos.find(x => x.id === candId);
+      if (!c) return;
+      const tokenAcesso = (c.tokenAcesso && String(c.tokenAcesso).trim().length === 10)
+        ? String(c.tokenAcesso).trim().toUpperCase()
+        : gerarTokenUnico10(coletarTokensExistentes());
+      const membroDocId = gerarIdUnico('mem', corpAtual, tokenAcesso);
+      const ciclo120 = criarCamposCiclo120Dias(Date.now(), DIAS_GESTAO);
+
+      const novoMembro = {
+        id: membroDocId,
+        corporacao: corpAtual,
+        nome: c.nome,
+        patente: c.patente,
+        qth: c.qth,
+        discord: c.discord,
+        veiculo: c.veiculo || 'VEÍCULO',
+        tokenAcesso,
+        boxes: ['neutro','neutro','neutro','neutro','neutro'],
+        slotDatas: {},
+        qtdPromocoes: 0, qtdRebaixamentos: 0, qtdMaConduta: 0, motivoExonere: '',
+        ...ciclo120
+      };
+
+      membros = [novoMembro, ...membros];
+      candidatos = candidatos.filter(x => x.id !== candId);
+      persistirCachesLocais();
+      atualizarFiltrosEResumosComando();
+      renderizarTabelas();
+      renderizarCandidatos();
+      renderizarDesempenhoGeral();
+
+      if (firebaseConfigValido) {
+        try {
+          await setDoc(doc(db, 'membros', membroDocId), { ...novoMembro, criadoEm: serverTimestamp() }, { merge: true });
+          await deleteDoc(doc(db, 'candidaturas', candId));
+        } catch (e) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: membroDocId,
+        nome: c.nome,
+        patente: c.patente,
+        token: tokenAcesso,
+        acao: `Candidato admitido no efetivo (${DIAS_GESTAO}d) por ${usuarioLogado.nome}`,
+        detalhes: `Setor/Turno: ${c.qth} • Token: ${tokenAcesso}`
+      });
+
+      abrirModalTokenAdmissao(tokenAcesso, `Admitido (ciclo de ${DIAS_GESTAO} dias): [${c.patente}] ${c.nome}. Token individual de 10 caracteres:`);
+      showToast(`Candidato ${c.nome} admitido! Token: ${tokenAcesso}`);
+    };
+
+    window.removerCandidato = async function(candId) {
+      if (modoAcesso !== 'comando') return;
+      const c = candidatos.find(x => x.id === candId);
+      candidatos = candidatos.filter(x => x.id !== candId);
+      persistirCachesLocais();
+      renderizarCandidatos();
+
+      if (firebaseConfigValido) {
+        try {
+          await deleteDoc(doc(db, 'candidaturas', candId));
+        } catch (e) {}
+      }
+
+      if (c) {
+        await registrarEventoAuditoria({
+          corp: corpAtual,
+          categoria: 'ATIVIDADE',
+          nome: c.nome,
+          patente: c.patente,
+          token: c.tokenAcesso || '',
+          acao: `Candidatura recusada por ${usuarioLogado.nome}`,
+          detalhes: `Setor/Turno: ${c.qth}`
+        });
+      }
+      showToast("Candidatura removida.");
+    };
+
+    function calcularMetricasMembro(m) {
+      const boxes = m.boxes || ['neutro','neutro','neutro','neutro','neutro'];
+      let pts = 0;
+      let verdes = 0, amarelos = 0, vermelhos = 0, azuis = 0;
+
+      boxes.forEach(c => {
+        if (c === 'verde') { pts += 2; verdes++; }
+        if (c === 'amarelo') { pts += 1; amarelos++; }
+        if (c === 'vermelho') { pts -= 2; vermelhos++; }
+        if (c === 'azul') { azuis++; }
+      });
+
+      pts += (m.qtdPromocoes || 0) * 0.2;
+      pts -= (m.qtdRebaixamentos || 0) * 0.1;
+      pts -= (m.qtdMaConduta || 0) * 3.0;
+
+      const score = Number(pts.toFixed(1));
+      const aproveitamento = Math.max(0, Math.min(100, Math.round(((verdes + amarelos * 0.5) / 5) * 100)));
+      const ativosMesclados = mesclarPontosAtivosComLocal();
+      const turnoAtivo = ativosMesclados.find(p => p.membroId === m.id);
+      const emTurno = !!turnoAtivo;
+      const meta1hAtingida = turnoAtivo?.inicioMs ? (Date.now() - turnoAtivo.inicioMs >= UMA_HORA_MS) : false;
+
+      return { score, verdes, amarelos, vermelhos, azuis, aproveitamento, emTurno, turnoAtivo, meta1hAtingida };
+    }
+
+    function atualizarFiltrosEResumosComando() {
+      const daCorp = membros.filter(m => normalizarCorporacao(m.corporacao) === corpAtual);
+      const ativos = daCorp.filter(m => !m.motivoExonere);
+      const exonerados = daCorp.filter(m => !!m.motivoExonere);
+
+      const elTot = document.getElementById('stat-total');
+      if (elTot) elTot.textContent = ativos.length;
+      const elPres = document.getElementById('stat-presentes');
+      if (elPres) elPres.textContent = ativos.filter(m => (m.boxes || []).includes('verde')).length;
+      const elJust = document.getElementById('stat-justificados');
+      if (elJust) elJust.textContent = ativos.filter(m => (m.boxes || []).includes('amarelo')).length;
+      const elFer = document.getElementById('stat-ferias');
+      if (elFer) elFer.textContent = ativos.filter(m => (m.boxes || []).includes('azul')).length;
+      const elEx = document.getElementById('stat-exonerados');
+      if (elEx) elEx.textContent = exonerados.length;
+
+      const mapQth = {};
+      const mapPat = {};
+      ativos.forEach(m => {
+        mapQth[m.qth] = (mapQth[m.qth] || 0) + 1;
+        mapPat[m.patente] = (mapPat[m.patente] || 0) + 1;
+      });
+
+      const selQth = document.getElementById('filtro-qth');
+      const selDesempQth = document.getElementById('desemp-qth');
+      if (!selQth || !selDesempQth) return;
+
+      const valQthAtual = selQth.value;
+      const valDesempQth = selDesempQth.value;
+
+      const opcoesQth = Object.keys(mapQth).sort().map(q => `<option value="${q}">${q} (${mapQth[q]})</option>`).join('');
+      selQth.innerHTML = `<option value="">Todos os Setores / Turnos</option>` + opcoesQth;
+      selDesempQth.innerHTML = `<option value="">Todos os QTHs / Turnos</option>` + opcoesQth;
+      selQth.value = valQthAtual;
+      selDesempQth.value = valDesempQth;
+
+      const selPat = document.getElementById('filtro-patente');
+      const valPatAtual = selPat.value;
+      selPat.innerHTML = `<option value="">Todas as Patentes / Cargos</option>` +
+        Object.keys(mapPat).map(p => `<option value="${p}">${p} (${mapPat[p]})</option>`).join('');
+      selPat.value = valPatAtual;
+
+      document.getElementById('resumo-por-qth').innerHTML = Object.entries(mapQth).map(([q, qtd]) =>
+        `<button type="button" onclick="aplicarFiltroRapido('qth','${q}')" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-500 text-xs font-mono text-slate-200">${q}: <b class="theme-accent-text">${qtd}</b></button>`
+      ).join('') || '<span class="text-xs text-slate-500">Sem dados</span>';
+
+      document.getElementById('resumo-por-patente').innerHTML = Object.entries(mapPat).map(([p, qtd]) =>
+        `<button type="button" onclick="aplicarFiltroRapido('patente','${p}')" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 hover:border-amber-500 text-xs font-mono text-slate-200">${p}: <b class="text-amber-400">${qtd}</b></button>`
+      ).join('') || '<span class="text-xs text-slate-500">Sem dados</span>';
+
+      atualizarGraficoTop7(ativos);
+    }
+
+    window.alternarVisaoDesempenho = function(modo) {
+      visaoDesempenho = modo;
+      const isCards = modo === 'cards';
+      document.getElementById('grid-desempenho-membros').classList.toggle('hidden', !isCards);
+      document.getElementById('wrapper-tabela-desempenho').classList.toggle('hidden', isCards);
+
+      const btnCards = document.getElementById('btn-view-cards');
+      const btnTab = document.getElementById('btn-view-tabela');
+      btnCards.classList.toggle('theme-btn-primary', isCards);
+      btnCards.classList.toggle('text-slate-400', !isCards);
+      btnTab.classList.toggle('theme-btn-primary', !isCards);
+      btnTab.classList.toggle('text-slate-400', isCards);
+
+      renderizarDesempenhoGeral();
+    };
+
+    window.renderizarDesempenhoGeral = function() {
+      const grid = document.getElementById('grid-desempenho-membros');
+      const tbodyCompacto = document.getElementById('tbody-desempenho-compacto');
+      if (!grid || modoAcesso !== 'comando') return;
+
+      const busca = (document.getElementById('desemp-busca')?.value || '').toLowerCase().trim();
+      const fQth = document.getElementById('desemp-qth')?.value || '';
+      const ordem = document.getElementById('desemp-ordem')?.value || 'score_desc';
+      const limite = document.getElementById('desemp-limite')?.value || 'ALL';
+
+      let lista = membros
+        .filter(m => normalizarCorporacao(m.corporacao) === corpAtual && !m.motivoExonere)
+        .map(m => ({ ...m, metricas: calcularMetricasMembro(m) }))
+        .filter(m => {
+          if (fQth && m.qth !== fQth) return false;
+          if (busca && !`${m.nome} ${m.patente} ${m.qth} ${m.discord} ${m.tokenAcesso || ''}`.toLowerCase().includes(busca)) return false;
+          return true;
+        });
+
+      lista.sort((a, b) => {
+        if (ordem === 'score_desc') return b.metricas.score - a.metricas.score;
+        if (ordem === 'score_asc') return a.metricas.score - b.metricas.score;
+        if (ordem === 'presenca_desc') return b.metricas.verdes - a.metricas.verdes;
+        if (ordem === 'freq_desc') return b.metricas.aproveitamento - a.metricas.aproveitamento;
+        return a.nome.localeCompare(b.nome);
+      });
+
+      const somaScore = lista.reduce((acc, item) => acc + item.metricas.score, 0);
+      const somaFreq = lista.reduce((acc, item) => acc + item.metricas.aproveitamento, 0);
+      const emTurnoCount = lista.filter(item => item.metricas.emTurno).length;
+
+      document.getElementById('desemp-kpi-total').textContent = lista.length;
+      document.getElementById('desemp-kpi-media').textContent = lista.length ? `${(somaScore / lista.length).toFixed(1)} pts` : '0.0 pts';
+      document.getElementById('desemp-kpi-freq').textContent = lista.length ? `${Math.round(somaFreq / lista.length)}%` : '0%';
+      document.getElementById('desemp-kpi-ativos').textContent = emTurnoCount;
+
+      const exibidos = limite === 'ALL' ? lista : lista.slice(0, Number(limite));
+
+      if (!exibidos.length) {
+        grid.innerHTML = `<p class="text-xs text-slate-500 col-span-full py-6 text-center">Nenhum membro encontrado para o filtro atual.</p>`;
+        tbodyCompacto.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500">Nenhum membro encontrado.</td></tr>`;
+        return;
+      }
+
+      if (visaoDesempenho === 'cards') {
+        grid.innerHTML = exibidos.map((m, idx) => {
+          const mt = m.metricas;
+          const badgeTurno = mt.emTurno
+            ? (mt.meta1hAtingida
+                ? '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">TURNO ≥ 1H</span>'
+                : '<span class="px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold">EM TURNO (&lt;1H)</span>')
+            : '<span class="text-slate-500">OFFLINE</span>';
+
+          return `
+            <div class="p-3.5 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2.5">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-white truncate">
+                    <span class="text-slate-500 font-mono mr-1">#${idx + 1}</span>
+                    [${m.patente}] ${m.nome}
+                  </div>
+                  <div class="text-[11px] font-mono text-slate-400 truncate">QTH: ${m.qth} • ${m.discord || ''}</div>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-sm font-extrabold font-mono theme-accent-text">${mt.score} pts</div>
+                  <div class="text-[10px] font-mono text-slate-400">${mt.aproveitamento}% freq.</div>
+                </div>
+              </div>
+
+              <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div class="h-full theme-btn-primary transition-all" style="width: ${mt.aproveitamento}%"></div>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-1 text-[10px] font-mono text-slate-300 pt-0.5">
+                <span>🟩 ${mt.verdes}</span>
+                <span>🟨 ${mt.amarelos}</span>
+                <span>🟥 ${mt.vermelhos}</span>
+                <span>🟦 ${mt.azuis}</span>
+                ${badgeTurno}
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        tbodyCompacto.innerHTML = exibidos.map((m, idx) => {
+          const mt = m.metricas;
+          const statusTexto = mt.emTurno
+            ? (mt.meta1hAtingida ? '<span class="text-emerald-400 font-bold">🟢 Meta 1h+</span>' : '<span class="text-red-400 font-bold">🔴 Em turno (&lt;1h)</span>')
+            : '<span class="text-slate-500">Off</span>';
+
+          return `
+            <tr class="hover:bg-slate-800/40">
+              <td class="py-2 px-3 font-mono text-slate-500">#${idx + 1}</td>
+              <td class="py-2 px-3 font-bold text-white">${m.nome} <span class="text-[10px] text-indigo-400 font-mono block sm:inline">${m.discord || ''}</span></td>
+              <td class="py-2 px-3 font-mono"><span class="theme-accent-text font-bold">${m.patente}</span> • ${m.qth}</td>
+              <td class="py-2 px-3 text-center font-mono">🟩${mt.verdes} 🟨${mt.amarelos} 🟥${mt.vermelhos} 🟦${mt.azuis}</td>
+              <td class="py-2 px-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div class="h-full theme-btn-primary" style="width:${mt.aproveitamento}%"></div>
+                  </div>
+                  <span class="font-mono text-[11px]">${mt.aproveitamento}%</span>
+                </div>
+              </td>
+              <td class="py-2 px-3 text-center font-mono text-[11px]">${statusTexto}</td>
+              <td class="py-2 px-3 text-right font-mono font-bold theme-accent-text">${mt.score} pts</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    };
+
+    window.aplicarFiltroRapido = function(tipo, valor) {
+      if (tipo === 'qth') document.getElementById('filtro-qth').value = valor;
+      if (tipo === 'patente') document.getElementById('filtro-patente').value = valor;
+      renderizarTabelas();
+    };
+
+    window.limparFiltros = function() {
+      document.getElementById('filtro-pesquisa').value = '';
+      document.getElementById('filtro-qth').value = '';
+      document.getElementById('filtro-patente').value = '';
+      document.getElementById('filtro-status').value = '';
+      renderizarTabelas();
+    };
+
+    function atualizarGraficoTop7(ativos) {
+      const el = document.getElementById('chartDestaques');
+      if (!el || modoAcesso !== 'comando') return;
+      const top = [...ativos].sort((a, b) => calcularMetricasMembro(b).score - calcularMetricasMembro(a).score).slice(0, 7);
+      if (chartDestaques) chartDestaques.destroy();
+      chartDestaques = new Chart(el.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: top.map(m => `[${m.patente}] ${m.nome}`),
+          datasets: [{
+            label: 'Score',
+            data: top.map(m => calcularMetricasMembro(m).score),
+            backgroundColor: CORPORACOES[corpAtual].corGrafico,
+            borderRadius: 6
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function renderizarTabelas() {
+      const tbody = document.getElementById('tabela-efetivo');
+      const tbodyExon = document.getElementById('tabela-exonerados');
+      tbody.innerHTML = '';
+      tbodyExon.innerHTML = '';
+
+      const busca = (document.getElementById('filtro-pesquisa')?.value || '').toLowerCase().trim();
+      const fQth = document.getElementById('filtro-qth')?.value || '';
+      const fPat = document.getElementById('filtro-patente')?.value || '';
+      const fStatus = document.getElementById('filtro-status')?.value || '';
+      const slotsLabels = CORPORACOES[corpAtual].slotsLabels;
+
+      let exibidosCount = 0;
+
+      membros.filter(m => normalizarCorporacao(m.corporacao) === corpAtual).forEach(m => {
+        if (m.motivoExonere) {
+          tbodyExon.innerHTML += `
+            <tr>
+              <td class="py-3 px-4 font-bold text-slate-400 line-through">${m.nome} <span class="text-[10px] font-mono ml-1 px-1.5 py-0.5 rounded bg-slate-800 text-amber-400">LIMBO</span></td>
+              <td class="py-3 px-4 font-mono">[${m.patente}] ${m.qth} • <span class="theme-accent-text">${m.tokenAcesso || '---'}</span></td>
+              <td class="py-3 px-4 text-xs italic">${m.motivoExonere}</td>
+              <td class="py-3 px-4 text-center"><button type="button" onclick="readmitirMembro('${m.id}')" class="px-2.5 py-1 theme-btn-primary text-white rounded text-xs font-bold">Tirar do Limbo</button></td>
+            </tr>`;
+          return;
+        }
+
+        const mt = calcularMetricasMembro(m);
+
+        if (modoAcesso === 'efetivo' && m.id !== usuarioLogado.id) return;
+        if (modoAcesso === 'comando') {
+          if (fQth && m.qth !== fQth) return;
+          if (fPat && m.patente !== fPat) return;
+          if (busca && !`${m.nome} ${m.discord} ${m.patente} ${m.qth} ${m.tokenAcesso || ''}`.toLowerCase().includes(busca)) return;
+          if (fStatus === 'EM_TURNO' && !mt.emTurno) return;
+          if (fStatus === 'COM_PRESENCA' && mt.verdes === 0) return;
+          if (fStatus === 'SEM_PRESENCA' && mt.verdes > 0) return;
+          if (fStatus === 'JUSTIFICADO' && mt.amarelos === 0) return;
+          if (fStatus === 'FERIAS' && mt.azuis === 0) return;
+        }
+
+        exibidosCount++;
+        const boxesHtml = (m.boxes || ['neutro','neutro','neutro','neutro','neutro']).map((cor, idx) => `
+          <button type="button" onclick="ciclarBox('${m.id}', ${idx})" title="${slotsLabels[idx] || idx+1}"
+            class="px-2 h-7 rounded-lg font-bold text-[10px] box-presenca-${cor} transition shrink-0">
+            ${slotsLabels[idx] || idx + 1}
+          </button>
+        `).join('');
+
+        const tagTurno = mt.emTurno
+          ? (mt.meta1hAtingida
+              ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">QRV ≥1h</span>'
+              : '<span class="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-mono">QRV &lt;1h</span>')
+          : '';
+
+        const tokenBadge = m.tokenAcesso
+          ? `<button type="button" onclick="copiarTextoToken('${m.tokenAcesso}')" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-950 border border-slate-800 hover:border-slate-600 theme-accent-text" title="Copiar Token">🔑 ${m.tokenAcesso}</button>`
+          : '';
+
+        const diasRestCiclo = obterDiasRestantesCiclo(m);
+        const expiradoCiclo = estaCicloExpirado(m.cicloFimMs || m.expiraEm);
+        const cicloBadge = expiradoCiclo
+          ? `<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">Expirado (${formatarFimCicloBR(m)})</span>`
+          : `<span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">${diasRestCiclo}d restantes</span>`;
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 px-3 sm:px-4">
+              <div class="font-bold text-white flex items-center gap-1.5 flex-wrap">
+                <span>${m.nome}</span>
+                ${tagTurno}
+              </div>
+              <div class="flex items-center gap-2 flex-wrap mt-0.5">
+                <span class="text-[11px] text-indigo-400 font-mono">${m.discord || ''}</span>
+                ${modoAcesso === 'comando' ? tokenBadge : ''}
+              </div>
+            </td>
+            <td class="py-3 px-3 sm:px-4 font-mono font-bold theme-accent-text">${m.patente}</td>
+            <td class="py-3 px-3 sm:px-4 font-bold">${m.qth}</td>
+            <td class="py-3 px-3 sm:px-4 text-center">
+              <div class="flex flex-col items-center gap-1">
+                ${cicloBadge}
+                ${modoAcesso === 'comando' ? `<button type="button" onclick="renovarCicloMembro120('${m.id}')" class="text-[10px] font-mono text-emerald-400 hover:underline">Renovar 120d</button>` : ''}
+              </div>
+            </td>
+            <td class="py-3 px-3 sm:px-4"><div class="flex items-center justify-center gap-1">${boxesHtml}</div></td>
+            <td class="py-3 px-3 sm:px-4 text-center font-mono font-bold theme-accent-text">${mt.score} pts</td>
+            <td class="py-3 px-3 sm:px-4 text-center admin-only ${modoAcesso !== 'comando' ? 'hidden' : ''}">
+              <div class="flex items-center justify-center gap-1">
+                <button type="button" onclick="abrirModalEditarMembro('${m.id}')" class="px-2 py-1 bg-slate-800 hover:bg-indigo-600/30 text-indigo-300 rounded" title="Editar Ficha Completa">✏️</button>
+                <button type="button" onclick="alterarPatente('${m.id}', 1)" class="px-2 py-1 bg-slate-800 hover:bg-emerald-600/30 text-emerald-400 rounded" title="Promover">🔼</button>
+                <button type="button" onclick="alterarPatente('${m.id}', -1)" class="px-2 py-1 bg-slate-800 hover:bg-amber-600/30 text-amber-400 rounded" title="Rebaixar">🔽</button>
+                <button type="button" onclick="mudarSetor('${m.id}')" class="px-2 py-1 bg-slate-800 hover:bg-blue-600/30 text-blue-400 rounded" title="Mudar QTH/Turno">▶️</button>
+                <button type="button" onclick="exonerarMembro('${m.id}')" class="px-2 py-1 bg-red-950 hover:bg-red-800 text-red-400 rounded" title="Mandar para o Limbo (Exonerar)">✕</button>
+              </div>
+            </td>
+          </tr>`;
+      });
+
+      const badgeCont = document.getElementById('contador-resultado-efetivo');
+      if (badgeCont) badgeCont.textContent = `${exibidosCount} exibido(s)`;
+    }
+
+    function formatarHoraCelular(ms = Date.now()) {
+      return new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function iniciarPontoTurnoHP(turnoNome) {
+      const turnoAlvo = CORPORACOES.SIST_HP.slotsLabels.includes(turnoNome) ? turnoNome : obterTurnoAtualHP();
+      const inicioMs = Date.now();
+      const hora = formatarHoraCelular(inicioMs);
+      const registroLocal = {
+        corporacao: corpAtual,
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        setor: turnoAlvo,
+        turnoQth: turnoAlvo,
+        equipe: equipeHpAtual,
+        status: 'QRV',
+        dataIso: hojeIsoLocal(inicioMs),
+        horaEntrada: hora,
+        inicioMs
+      };
+
+      turnoQthSelecionado = turnoAlvo;
+      salvarPersistente('rp_hp_qth_turno', turnoAlvo);
+      usuarioLogado = { ...usuarioLogado, qth: turnoAlvo };
+      salvarJsonPersistente('rp_usuario_logado', usuarioLogado);
+      membros = membros.map(m => m.id === usuarioLogado.id ? { ...m, qth: turnoAlvo } : m);
+      persistirCachesLocais();
+
+      salvarTurnoLocalAberto(registroLocal, usuarioLogado.id);
+
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'membros', usuarioLogado.id), { qth: turnoAlvo });
+          const ref = await addDoc(collection(db, 'ponto'), {
+            ...registroLocal,
+            criadoEm: serverTimestamp()
+          });
+          registroLocal.docId = ref.id;
+          turnoAtivoId = ref.id;
+          salvarTurnoLocalAberto(registroLocal, usuarioLogado.id);
+          salvarPersistente('rp_turno_ativo_id', ref.id);
+        } catch (e) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        token: usuarioLogado.tokenAcesso || '',
+        acao: `Iniciou ponto no turno atual (${turnoAlvo})`,
+        detalhes: `Horário de início: ${hora}${equipeHpAtual ? ` • Equipe: ${equipeHpAtual}` : ''}`
+      });
+
+      renderizarCincoBotoesTurnoHP();
+      atualizarInterfaceTimerHP();
+      renderizarPainelPonto(mesclarPontosAtivosComLocal(), historicoLocalEncerrados);
+      renderizarTabelas();
+      showToast(`Ponto iniciado no turno ${turnoAlvo} às ${hora}!`);
+    }
+
+    async function encerrarPontoTurnoHP(turnoAtual) {
+      const agoraMs = Date.now();
+      const inicioMs = turnoAtual.inicioMs || agoraMs;
+      const decorridoMs = Math.max(0, agoraMs - inicioMs);
+      const cumpriu1h = decorridoMs >= UMA_HORA_MS;
+      const mins = Math.max(1, Math.round(decorridoMs / 60000));
+      const tempoFormatado = formatarCronometro(decorridoMs);
+      const horaSaida = formatarHoraCelular(agoraMs);
+      const turnoNome = turnoAtual.turnoQth || obterTurnoAtualHP();
+
+      const registroEncerrado = {
+        id: turnoAtual.docId || turnoAtual.id || `hist_${agoraMs}`,
+        corporacao: corpAtual,
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        setor: turnoNome,
+        turnoQth: turnoNome,
+        equipe: turnoAtual.equipe || equipeHpAtual,
+        status: 'QTX',
+        dataIso: turnoAtual.dataIso || hojeIsoLocal(inicioMs),
+        horaEntrada: turnoAtual.horaEntrada || formatarHoraCelular(inicioMs),
+        horaSaida,
+        duracao: `${tempoFormatado} (${mins} min)`,
+        metaCumprida: cumpriu1h,
+        inicioMs
+      };
+
+      historicoLocalEncerrados = [registroEncerrado, ...historicoLocalEncerrados].slice(0, 50);
+      salvarJsonPersistente('rp_historico_local', historicoLocalEncerrados);
+      limparTurnoLocalAberto(usuarioLogado.id);
+      turnoAtivoId = null;
+      salvarPersistente('rp_turno_ativo_id', null);
+
+      const idxSlot = CORPORACOES.SIST_HP.slotsLabels.indexOf(turnoNome);
+      const slotDatas = { ...(usuarioLogado.slotDatas || {}) };
+      if (idxSlot >= 0) slotDatas[idxSlot] = hojeIsoLocal(agoraMs);
+
+      const boxes = [...(usuarioLogado.boxes || ['neutro','neutro','neutro','neutro','neutro'])];
+      if (cumpriu1h && idxSlot >= 0) {
+        boxes[idxSlot] = 'verde';
+      }
+
+      usuarioLogado = { ...usuarioLogado, boxes, slotDatas, qth: turnoNome };
+      salvarJsonPersistente('rp_usuario_logado', usuarioLogado);
+      membros = membros.map(m => m.id === usuarioLogado.id ? { ...m, boxes, slotDatas, qth: turnoNome } : m);
+      persistirCachesLocais();
+
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'membros', usuarioLogado.id), { boxes, slotDatas, qth: turnoNome });
+          if (turnoAtual.docId || (turnoAtual.id && !String(turnoAtual.id).startsWith('local_'))) {
+            await updateDoc(doc(db, 'ponto', turnoAtual.docId || turnoAtual.id), {
+              status: 'QTX',
+              horaSaida,
+              duracao: registroEncerrado.duracao,
+              metaCumprida: cumpriu1h
+            });
+          }
+        } catch (e) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        token: usuarioLogado.tokenAcesso || '',
+        acao: `Finalizou ponto no turno atual (${turnoNome})`,
+        detalhes: `Início: ${registroEncerrado.horaEntrada} • Fim: ${horaSaida} • Duração: ${tempoFormatado} (${cumpriu1h ? 'Meta 1h+ cumprida' : 'Abaixo de 1h'})`
+      });
+
+      renderizarCincoBotoesTurnoHP();
+      atualizarInterfaceTimerHP();
+      renderizarPainelPonto(mesclarPontosAtivosComLocal(), historicoLocalEncerrados);
+      renderizarTabelas();
+      showToast(cumpriu1h
+        ? `Ponto finalizado (${tempoFormatado}) • Meta 1h+ cumprida 🟢`
+        : `Ponto finalizado (${tempoFormatado}) • Abaixo de 1h 🔴`);
+    }
+
+    window.salvarEquipeHP = function() {
+      equipeHpAtual = document.getElementById('hp-nome-equipe').value.toUpperCase().trim();
+      salvarPersistente('rp_hp_equipe', equipeHpAtual);
+      const meuTurno = mesclarPontosAtivosComLocal().find(p => p.membroId === usuarioLogado?.id);
+      if (meuTurno && usuarioLogado?.id) {
+        salvarTurnoLocalAberto({ ...meuTurno, equipe: equipeHpAtual }, usuarioLogado.id);
+      }
+      atualizarBadgesBoxHP(meuTurno);
+    };
+
+    function atualizarBadgesBoxHP(meuTurno) {
+      const turnoExibido = meuTurno?.turnoQth || obterTurnoAtualHP();
+      const equipeExibida = meuTurno?.equipe || equipeHpAtual;
+      const badgeInicio = document.getElementById('hp-box-inicio-hora');
+
+      document.getElementById('hp-box-tag').textContent = `TURNO ATUAL: ${turnoExibido}`;
+      const eqBadge = document.getElementById('hp-box-equipe-badge');
+      if (equipeExibida) {
+        eqBadge.textContent = `EQUIPE: ${equipeExibida}`;
+        eqBadge.classList.remove('hidden');
+      } else {
+        eqBadge.classList.add('hidden');
+      }
+
+      if (meuTurno?.inicioMs && badgeInicio) {
+        badgeInicio.textContent = `Início: ${meuTurno.horaEntrada || formatarHoraCelular(meuTurno.inicioMs)}`;
+        badgeInicio.classList.remove('hidden');
+      } else if (badgeInicio) {
+        badgeInicio.classList.add('hidden');
+      }
+    }
+
+    function formatarCronometro(ms) {
+      const totalSeg = Math.max(0, Math.floor(ms / 1000));
+      const h = String(Math.floor(totalSeg / 3600)).padStart(2, '0');
+      const m = String(Math.floor((totalSeg % 3600) / 60)).padStart(2, '0');
+      const s = String(totalSeg % 60).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    window.alternarTimerTurnoHP = async function() {
+      if (modoAcesso !== 'efetivo' || corpAtual !== 'SIST_HP') return;
+      const meuTurno = mesclarPontosAtivosComLocal().find(p => p.membroId === usuarioLogado.id);
+      if (!meuTurno) {
+        await iniciarPontoTurnoHP(obterTurnoAtualHP());
+      } else {
+        await encerrarPontoTurnoHP(meuTurno);
+      }
+    };
+
+    function atualizarInterfaceTimerHP() {
+      if (intervaloTimerHp) clearInterval(intervaloTimerHp);
+      if (corpAtual !== 'SIST_HP' || modoAcesso !== 'efetivo') return;
+
+      const box = document.getElementById('hp-box-turno-toggle');
+      const acaoTitulo = document.getElementById('hp-box-acao-titulo');
+      const subtitulo = document.getElementById('hp-box-subtitulo');
+      const display = document.getElementById('hp-timer-display');
+      const metaLabel = document.getElementById('hp-box-meta-label');
+      const barra = document.getElementById('hp-timer-barra');
+
+      const meuTurno = mesclarPontosAtivosComLocal().find(p => p.membroId === usuarioLogado?.id);
+      atualizarBadgesBoxHP(meuTurno);
+
+      if (!meuTurno) {
+        box.className = "w-full p-5 sm:p-6 rounded-2xl border-2 border-slate-700 bg-slate-950 hover:border-red-500/60 transition-all text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg cursor-pointer";
+        acaoTitulo.textContent = "INICIAR PONTO DO TURNO ATUAL";
+        subtitulo.textContent = "Clique aqui para iniciar o ponto neste turno; clique novamente para finalizar.";
+        display.textContent = "00:00:00";
+        metaLabel.textContent = "Meta: 1h00m00s";
+        metaLabel.className = "text-[11px] font-bold text-slate-400";
+        barra.style.width = "0%";
+        barra.className = "h-full bg-red-500 transition-all duration-500";
+        return;
+      }
+
+      if (meuTurno.turnoQth) {
+        turnoQthSelecionado = meuTurno.turnoQth;
+        salvarPersistente('rp_hp_qth_turno', meuTurno.turnoQth);
+      }
+      const horaIni = meuTurno.horaEntrada || formatarHoraCelular(meuTurno.inicioMs);
+      acaoTitulo.textContent = "FINALIZAR PONTO DO TURNO ATUAL";
+      subtitulo.textContent = `Ponto aberto desde ${horaIni} • Calculado pela hora atual do celular (salvo mesmo fechando).`;
+
+      const tick = () => {
+        const decorrido = Math.max(0, Date.now() - (meuTurno.inicioMs || Date.now()));
+        const cumpriu1h = decorrido >= UMA_HORA_MS;
+        const pct = Math.min(100, Math.round((decorrido / UMA_HORA_MS) * 100));
+
+        display.textContent = formatarCronometro(decorrido);
+        barra.style.width = `${pct}%`;
+
+        if (cumpriu1h) {
+          box.className = "w-full p-5 sm:p-6 rounded-2xl border-2 border-emerald-500 bg-emerald-950/40 transition-all text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg cursor-pointer";
+          metaLabel.textContent = "🟢 MÍNIMO DE 1H CUMPRIDO";
+          metaLabel.className = "text-xs font-extrabold text-emerald-400";
+          barra.className = "h-full bg-emerald-500 transition-all duration-500";
+        } else {
+          box.className = "w-full p-5 sm:p-6 rounded-2xl border-2 border-red-500 bg-red-950/40 transition-all text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg cursor-pointer";
+          metaLabel.textContent = `🔴 ABAIXO DE 1H (Faltam ${formatarCronometro(UMA_HORA_MS - decorrido)})`;
+          metaLabel.className = "text-xs font-extrabold text-red-400";
+          barra.className = "h-full bg-red-500 transition-all duration-500";
+        }
+      };
+
+      tick();
+      intervaloTimerHp = setInterval(tick, 1000);
+    }
+
+    window.iniciarTurnoPonto = async function() {
+      if (modoAcesso !== 'efetivo') return;
+      const inicioMs = Date.now();
+      const hora = formatarHoraCelular(inicioMs);
+      const registroLocal = {
+        corporacao: corpAtual,
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        setor: usuarioLogado.qth,
+        status: 'QRV',
+        dataIso: hojeIsoLocal(inicioMs),
+        horaEntrada: hora,
+        inicioMs
+      };
+      salvarTurnoLocalAberto(registroLocal, usuarioLogado.id);
+
+      if (firebaseConfigValido) {
+        try {
+          const ref = await addDoc(collection(db, 'ponto'), {
+            ...registroLocal,
+            criadoEm: serverTimestamp()
+          });
+          turnoAtivoId = ref.id;
+          salvarPersistente('rp_turno_ativo_id', ref.id);
+          salvarTurnoLocalAberto({ ...registroLocal, docId: ref.id }, usuarioLogado.id);
+        } catch (e) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        token: usuarioLogado.tokenAcesso || '',
+        acao: 'Iniciou turno de serviço (QRV)',
+        detalhes: `Setor: ${usuarioLogado.qth} • Horário de entrada: ${hora}`
+      });
+
+      renderizarPainelPonto(mesclarPontosAtivosComLocal(), historicoLocalEncerrados);
+      showToast("Turno iniciado (QRV)!");
+    };
+
+    window.encerrarTurnoPonto = async function() {
+      const meuTurno = mesclarPontosAtivosComLocal().find(p => p.membroId === usuarioLogado?.id);
+      if (!meuTurno) return;
+      const agoraMs = Date.now();
+      const horaSaida = formatarHoraCelular(agoraMs);
+      const mins = meuTurno.inicioMs ? Math.max(1, Math.round((agoraMs - meuTurno.inicioMs) / 60000)) : 0;
+
+      historicoLocalEncerrados = [{
+        ...meuTurno,
+        id: meuTurno.docId || meuTurno.id || `hist_${agoraMs}`,
+        status: 'QTX',
+        dataIso: meuTurno.dataIso || hojeIsoLocal(meuTurno.inicioMs || agoraMs),
+        horaSaida,
+        duracao: `${mins} min`
+      }, ...historicoLocalEncerrados].slice(0, 50);
+      salvarJsonPersistente('rp_historico_local', historicoLocalEncerrados);
+      limparTurnoLocalAberto(usuarioLogado.id);
+
+      if (firebaseConfigValido) {
+        const idDoc = meuTurno.docId || turnoAtivoId || meuTurno.id;
+        if (idDoc && !String(idDoc).startsWith('local_')) {
+          try {
+            await updateDoc(doc(db, 'ponto', idDoc), {
+              status: 'QTX',
+              horaSaida,
+              duracao: `${mins} min`
+            });
+          } catch (e) {}
+        }
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        token: usuarioLogado.tokenAcesso || '',
+        acao: 'Encerrou turno de serviço (QTX)',
+        detalhes: `Entrada: ${meuTurno.horaEntrada || '-'} • Saída: ${horaSaida} • Duração: ${mins} min`
+      });
+
+      turnoAtivoId = null;
+      salvarPersistente('rp_turno_ativo_id', null);
+      renderizarPainelPonto(mesclarPontosAtivosComLocal(), historicoLocalEncerrados);
+      showToast("Turno encerrado (QTX)!");
+    };
+
+    function renderizarPainelPonto(ativos, encerrados) {
+      const ativosDaCorp = ativos.filter(p => normalizarCorporacao(p.corporacao) === corpAtual);
+      const encerradosDaCorp = encerrados.filter(p => normalizarCorporacao(p.corporacao) === corpAtual);
+
+      const meuTurno = ativosDaCorp.find(p => p.membroId === usuarioLogado?.id);
+      if (meuTurno) turnoAtivoId = meuTurno.docId || meuTurno.id;
+
+      const btnIn = document.getElementById('btn-iniciar-qrv');
+      const btnOut = document.getElementById('btn-encerrar-qtx');
+      if (modoAcesso === 'comando' || corpAtual === 'SIST_HP') {
+        btnIn.classList.add('hidden');
+        btnOut.classList.add('hidden');
+      } else {
+        btnIn.classList.toggle('hidden', !!meuTurno);
+        btnOut.classList.toggle('hidden', !meuTurno);
+      }
+
+      document.getElementById('lista-em-servico-qrv').innerHTML = ativosDaCorp.map(p => {
+        const atingiu1h = p.inicioMs ? (Date.now() - p.inicioMs >= UMA_HORA_MS) : false;
+        const corBorda = corpAtual === 'SIST_HP'
+          ? (atingiu1h ? 'border-emerald-500/60' : 'border-red-500/60')
+          : 'theme-border';
+        const tagMeta = corpAtual === 'SIST_HP'
+          ? (atingiu1h ? '<span class="text-[10px] text-emerald-400 font-bold">🟢 ≥1h</span>' : '<span class="text-[10px] text-red-400 font-bold">🔴 &lt;1h</span>')
+          : '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>';
+
+        const detalheTurno = p.turnoQth
+          ? `${p.turnoQth}${p.equipe ? ` • ${p.equipe}` : ''}`
+          : `Setor: ${p.setor}`;
+
+        return `
+          <div class="p-3 rounded-xl bg-slate-950 border ${corBorda} flex items-center justify-between gap-2">
+            <div>
+              <div class="text-xs font-bold text-white">[${p.patente}] ${p.nome}</div>
+              <div class="text-[10px] font-mono text-slate-400">${detalheTurno} • Início: ${p.horaEntrada || formatarHoraCelular(p.inicioMs)}</div>
+            </div>
+            ${tagMeta}
+          </div>
+        `;
+      }).join('') || '<p class="text-xs text-slate-500 col-span-full">Nenhum membro em serviço no momento.</p>';
+
+      document.getElementById('tabela-historico-ponto').innerHTML = encerradosDaCorp.map(p => {
+        const detalheTurno = p.turnoQth
+          ? `<b class="text-white">${p.turnoQth}</b>${p.equipe ? ` • <span class="text-red-300">${p.equipe}</span>` : ''}`
+          : p.setor;
+
+        return `
+          <tr>
+            <td class="py-2 px-3 font-bold text-white">[${p.patente}] ${p.nome}</td>
+            <td class="py-2 px-3">${detalheTurno}</td>
+            <td class="py-2 px-3 font-mono">${p.horaEntrada || '-'}</td>
+            <td class="py-2 px-3 font-mono">${p.horaSaida || '-'}</td>
+            <td class="py-2 px-3 text-right font-mono ${p.metaCumprida === false ? 'text-red-400' : 'theme-accent-text'}">
+              ${p.duracao || '-'} ${p.metaCumprida === true ? '🟢' : (p.metaCumprida === false ? '🔴' : '')}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // AÇÕES DE GESTÃO E CADASTRO
+    window.ciclarBox = async function(membroId, idx) {
+      if (modoAcesso === 'efetivo' && usuarioLogado.id !== membroId) return;
+      const m = membros.find(x => x.id === membroId) || (usuarioLogado?.id === membroId ? usuarioLogado : null);
+      if (!m) return;
+      const boxes = [...(m.boxes || ['neutro','neutro','neutro','neutro','neutro'])];
+      const prox = CICLO_CORES[(CICLO_CORES.indexOf(boxes[idx]) + 1) % CICLO_CORES.length];
+      if (prox === 'preto' && modoAcesso !== 'comando') return;
+      boxes[idx] = prox;
+      const slotDatas = { ...(m.slotDatas || {}), [idx]: hojeIsoLocal() };
+
+      membros = membros.map(item => item.id === membroId ? { ...item, boxes, slotDatas } : item);
+      persistirCachesLocais();
+      if (usuarioLogado?.id === membroId) {
+        usuarioLogado = { ...usuarioLogado, boxes, slotDatas };
+        salvarJsonPersistente('rp_usuario_logado', usuarioLogado);
+      }
+
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'membros', membroId), { boxes, slotDatas });
+        } catch (e) {}
+      }
+
+      atualizarFiltrosEResumosComando();
+      renderizarTabelas();
+      renderizarDesempenhoGeral();
+
+      const rotuloSlot = CORPORACOES[corpAtual].slotsLabels[idx] || `Slot ${idx + 1}`;
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: m.id,
+        nome: m.nome,
+        patente: m.patente,
+        token: m.tokenAcesso || '',
+        acao: `Alterou status do slot ${rotuloSlot} para ${prox.toUpperCase()}`,
+        detalhes: `Responsável pela ação: ${usuarioLogado?.nome || '---'} (${modoAcesso || '---'})`
+      });
+    };
+
+    window.salvarMembroComando = async function(e) {
+      e.preventDefault();
+      if (modoAcesso !== 'comando') return;
+      const nome = document.getElementById('cad-nome').value.toUpperCase().trim();
+      let discord = document.getElementById('cad-discord').value.trim();
+      if (!discord.startsWith('@')) discord = '@' + discord;
+      const patente = document.getElementById('cad-patente').value;
+      const qth = document.getElementById('cad-qth').value.toUpperCase().trim();
+      const veiculo = document.getElementById('cad-veiculo').value.toUpperCase().trim() || 'VEÍCULO';
+      const tokenAcesso = gerarTokenUnico10(coletarTokensExistentes());
+      const docId = gerarIdUnico('mem', corpAtual, tokenAcesso);
+      const ciclo120 = criarCamposCiclo120Dias(Date.now(), DIAS_GESTAO);
+
+      const novoMembro = {
+        id: docId,
+        corporacao: corpAtual, nome, discord, patente, qth, veiculo, tokenAcesso,
+        boxes: ['neutro','neutro','neutro','neutro','neutro'],
+        slotDatas: {},
+        qtdPromocoes: 0, qtdRebaixamentos: 0, qtdMaConduta: 0, motivoExonere: '',
+        ...ciclo120
+      };
+
+      membros = [novoMembro, ...membros];
+      persistirCachesLocais();
+      atualizarFiltrosEResumosComando();
+      renderizarTabelas();
+      renderizarDesempenhoGeral();
+
+      if (firebaseConfigValido) {
+        try {
+          await setDoc(doc(db, 'membros', docId), novoMembro);
+        } catch (err) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: docId,
+        nome,
+        patente,
+        token: tokenAcesso,
+        acao: `Membro cadastrado diretamente pelo Comando (${usuarioLogado.nome}) • Ciclo ${DIAS_GESTAO}d`,
+        detalhes: `Setor/Turno: ${qth} • Token gerado: ${tokenAcesso}`
+      });
+
+      e.target.reset();
+      abrirModalTokenAdmissao(tokenAcesso, `Cadastrado no efetivo (ciclo de ${DIAS_GESTAO} dias): [${patente}] ${nome}. Token único de 10 caracteres:`);
+      showToast(`Membro ${nome} cadastrado! Token: ${tokenAcesso}`);
+    };
+
+    window.alterarPatente = async function(id, dir) {
+      if (modoAcesso !== 'comando') return;
+      const m = membros.find(x => x.id === id);
+      if (!m) return;
+      const lista = CORPORACOES[corpAtual].patentes;
+      const pos = lista.indexOf(m.patente);
+      const novaPos = pos + dir;
+      if (novaPos < 0 || novaPos >= lista.length) return;
+
+      const novaPatente = lista[novaPos];
+      const qtdPromocoes = (m.qtdPromocoes || 0) + (dir > 0 ? 1 : 0);
+      const qtdRebaixamentos = (m.qtdRebaixamentos || 0) + (dir < 0 ? 1 : 0);
+
+      membros = membros.map(item => item.id === id ? { ...item, patente: novaPatente, qtdPromocoes, qtdRebaixamentos } : item);
+      persistirCachesLocais();
+      atualizarFiltrosEResumosComando();
+      renderizarTabelas();
+      renderizarDesempenhoGeral();
+
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'membros', id), { patente: novaPatente, qtdPromocoes, qtdRebaixamentos });
+        } catch (e) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: id,
+        nome: m.nome,
+        patente: novaPatente,
+        token: m.tokenAcesso || '',
+        acao: `${dir > 0 ? 'Promovido' : 'Rebaixado'} de [${m.patente}] para [${novaPatente}]`,
+        detalhes: `Alterado por ${usuarioLogado.nome}`
+      });
+
+      showToast(`Patente atualizada para ${novaPatente}`);
+    };
+
+    window.mudarSetor = async function(id) {
+      if (modoAcesso !== 'comando') return;
+      const m = membros.find(x => x.id === id);
+      if (!m) return;
+      const novo = prompt(`Novo Setor / QTH / Turno para ${m.nome}:`, m.qth);
+      if (novo) {
+        const novoFmt = novo.toUpperCase().trim();
+        membros = membros.map(item => item.id === id ? { ...item, qth: novoFmt } : item);
+        persistirCachesLocais();
+        atualizarFiltrosEResumosComando();
+        renderizarTabelas();
+        renderizarDesempenhoGeral();
+
+        if (firebaseConfigValido) {
+          try {
+            await updateDoc(doc(db, 'membros', id), { qth: novoFmt });
+          } catch (e) {}
+        }
+
+        await registrarEventoAuditoria({
+          corp: corpAtual,
+          categoria: 'ATIVIDADE',
+          membroId: id,
+          nome: m.nome,
+          patente: m.patente,
+          token: m.tokenAcesso || '',
+          acao: `Setor/Turno alterado de ${m.qth} para ${novoFmt}`,
+          detalhes: `Alterado por ${usuarioLogado.nome}`
+        });
+        showToast("Atualizado com sucesso!");
+      }
+    };
+
+    window.exonerarMembro = async function(id) {
+      if (modoAcesso !== 'comando') return;
+      const m = membros.find(x => x.id === id);
+      const motivo = prompt("Informe o motivo da exoneração (o membro irá para o limbo e só o Alto Comando poderá tirá-lo):");
+      if (motivo) {
+        const motivoLimpo = motivo.trim();
+        const boxesLimbo = ['preto','preto','preto','preto','preto'];
+        membros = membros.map(item => item.id === id ? { ...item, boxes: boxesLimbo, motivoExonere: motivoLimpo } : item);
+        persistirCachesLocais();
+        atualizarFiltrosEResumosComando();
+        renderizarTabelas();
+        renderizarDesempenhoGeral();
+
+        if (firebaseConfigValido) {
+          try {
+            await updateDoc(doc(db, 'membros', id), {
+              boxes: boxesLimbo,
+              motivoExonere: motivoLimpo
+            });
+          } catch (e) {}
+        }
+
+        await registrarEventoAuditoria({
+          corp: corpAtual,
+          categoria: 'ATIVIDADE',
+          membroId: id,
+          nome: m?.nome || id,
+          patente: m?.patente || '',
+          token: m?.tokenAcesso || '',
+          acao: `Membro enviado para o limbo (exonerado) por ${usuarioLogado.nome}`,
+          detalhes: `Motivo: ${motivoLimpo}`
+        });
+        showToast("Membro movido para o limbo (exonerado).");
+      }
+    };
+
+    window.readmitirMembro = async function(id) {
+      if (modoAcesso !== 'comando') return;
+      const m = membros.find(x => x.id === id);
+      const boxesAtivos = ['neutro','neutro','neutro','neutro','neutro'];
+      const ciclo120 = criarCamposCiclo120Dias(Date.now(), DIAS_GESTAO);
+      membros = membros.map(item => item.id === id ? { ...item, boxes: boxesAtivos, motivoExonere: '', ...ciclo120 } : item);
+      persistirCachesLocais();
+      atualizarFiltrosEResumosComando();
+      renderizarTabelas();
+      renderizarDesempenhoGeral();
+
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'membros', id), {
+            boxes: boxesAtivos,
+            motivoExonere: '',
+            ...ciclo120
+          });
+        } catch (e) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: id,
+        nome: m?.nome || id,
+        patente: m?.patente || '',
+        token: m?.tokenAcesso || '',
+        acao: `Retirado do limbo / readmitido (${DIAS_GESTAO}d) pelo Alto Comando (${usuarioLogado.nome})`,
+        detalhes: `Retornou ao efetivo ativo`
+      });
+      showToast("Membro retirado do limbo e readmitido!");
+    };
+
+    // MACROS
+    let macrosGeradasAtuais = [];
+    window.gerarMacrosPersonalizadas = function() {
+      const p = document.getElementById('macro-patente-aba').value || 'REC';
+      const n = (document.getElementById('macro-nome-aba').value || 'NOME').toUpperCase();
+      const s = (document.getElementById('macro-setor-aba').value || 'TURNO').toUpperCase();
+      const v = (document.getElementById('macro-veiculo-aba').value || 'VEÍCULO').toUpperCase();
+
+      macrosGeradasAtuais = CORPORACOES[corpAtual].gerarMacros(p, n, s, v);
+      document.getElementById('container-macros-lista-aba').innerHTML = macrosGeradasAtuais.map((m, i) => `
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="min-w-0">
+            <span class="text-[10px] font-bold uppercase theme-accent-text">${m.cat}</span>
+            <div class="font-mono text-xs text-slate-200 mt-0.5 break-words">\`${m.txt}\`</div>
+          </div>
+          <button type="button" onclick="copiarMacroIdx(${i})" class="px-3 py-1.5 theme-btn-primary text-white text-xs font-bold rounded-lg shrink-0 self-end sm:self-auto">Copiar</button>
+        </div>
+      `).join('');
+    };
+
+    window.copiarMacroIdx = function(i) {
+      navigator.clipboard.writeText('`' + macrosGeradasAtuais[i].txt + '`');
+      showToast("Macro copiada!");
+    };
+
+    window.copiarTodasMacrosAba = function() {
+      navigator.clipboard.writeText(macrosGeradasAtuais.map(m => '`' + m.txt + '`').join('\n\n'));
+      showToast("Todas as macros copiadas!");
+    };
+
+    // JUSTIFICATIVAS
+    window.enviarJustificativaFirestore = async function(e) {
+      e.preventDefault();
+      if (modoAcesso !== 'efetivo') return;
+      const selecionados = Array.from(document.querySelectorAll('input[name="just-boxes"]:checked')).map(c => Number(c.value));
+      if (!selecionados.length) {
+        notificarAviso("Selecione pelo menos 1 turno/horário!");
+        return;
+      }
+
+      const slotsLabels = CORPORACOES[corpAtual].slotsLabels;
+      const turnosTexto = selecionados.map(i => slotsLabels[i]).join(', ');
+      const dataHoraVal = document.getElementById('just-data-hora').value;
+      const dataIsoJust = dataHoraVal ? dataHoraVal.slice(0, 10) : hojeIsoLocal();
+      const motivoTxt = document.getElementById('just-descricao-motivo').value.trim();
+
+      const boxes = [...(usuarioLogado.boxes || ['neutro','neutro','neutro','neutro','neutro'])];
+      const slotDatas = { ...(usuarioLogado.slotDatas || {}) };
+      selecionados.forEach(i => {
+        boxes[i] = 'amarelo';
+        slotDatas[i] = dataIsoJust;
+      });
+      usuarioLogado = { ...usuarioLogado, boxes, slotDatas };
+      salvarJsonPersistente('rp_usuario_logado', usuarioLogado);
+      membros = membros.map(m => m.id === usuarioLogado.id ? { ...m, boxes, slotDatas } : m);
+      persistirCachesLocais();
+
+      if (firebaseConfigValido) {
+        try {
+          await addDoc(collection(db, 'justificativas'), {
+            corporacao: corpAtual,
+            membroId: usuarioLogado.id,
+            nome: usuarioLogado.nome,
+            patente: usuarioLogado.patente,
+            qth: usuarioLogado.qth,
+            tipo: document.getElementById('just-tipo-atividade').value,
+            dataHora: dataHoraVal,
+            dataIso: dataIsoJust,
+            responsavel: document.getElementById('just-comando-resp').value.toUpperCase(),
+            turnosTexto,
+            motivo: motivoTxt,
+            criadoEm: serverTimestamp()
+          });
+          await updateDoc(doc(db, 'membros', usuarioLogado.id), { boxes, slotDatas });
+        } catch (err) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        token: usuarioLogado.tokenAcesso || '',
+        acao: `Enviou justificativa de ausência (${turnosTexto})`,
+        detalhes: `Data: ${dataIsoJust} • Motivo: ${motivoTxt}`
+      });
+
+      e.target.reset();
+      showToast("Justificativa entregue ao Comando!");
+    };
+
+    function renderizarJustificativas(lista) {
+      const filtrada = modoAcesso === 'comando' ? lista : lista.filter(j => j.membroId === usuarioLogado?.id);
+      document.getElementById('lista-justificativas-firestore').innerHTML = filtrada.map(j => `
+        <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+          <div class="flex flex-wrap justify-between gap-2 text-xs">
+            <span class="font-bold text-white">[${j.patente}] ${j.nome} (${j.qth})</span>
+            <span class="font-mono text-yellow-400">Turnos: ${j.turnosTexto} (🟨)</span>
+          </div>
+          <div class="text-[11px] text-slate-400">${j.tipo} • Data: ${(j.dataHora || '').replace('T', ' ')} • Resp: ${j.responsavel}</div>
+          <p class="text-xs text-slate-200 pt-1">"${j.motivo}"</p>
+        </div>
+      `).join('') || '<p class="text-xs text-slate-500">Nenhuma justificativa registrada.</p>';
+    }
+
+    // FÉRIAS
+    window.enviarSolicitacaoFeriasFirestore = async function(e) {
+      e.preventDefault();
+      if (modoAcesso !== 'efetivo') return;
+      const diasVal = Number(document.getElementById('solic-dias').value);
+      const motivoVal = document.getElementById('solic-motivo').value.trim();
+
+      if (firebaseConfigValido) {
+        try {
+          await addDoc(collection(db, 'ferias'), {
+            corporacao: corpAtual,
+            membroId: usuarioLogado.id,
+            nome: usuarioLogado.nome,
+            patente: usuarioLogado.patente,
+            qth: usuarioLogado.qth,
+            dias: diasVal,
+            motivo: motivoVal,
+            status: 'PENDENTE',
+            criadoEm: serverTimestamp()
+          });
+        } catch (err) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        patente: usuarioLogado.patente,
+        token: usuarioLogado.tokenAcesso || '',
+        acao: `Solicitou licença/férias (${diasVal} dias)`,
+        detalhes: `Motivo: ${motivoVal}`
+      });
+
+      e.target.reset();
+      showToast("Pedido de férias enviado ao Comando!");
+    };
+
+    function renderizarFerias(lista) {
+      const pendentes = lista.filter(f => f.status === 'PENDENTE');
+      document.getElementById('lista-solicitacoes-ferias').innerHTML = pendentes.map(f => `
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div>
+            <b class="text-white">[${f.patente}] ${f.nome} (${f.qth})</b> — <span class="text-blue-400 font-mono">${f.dias} dias</span>
+            <div class="text-slate-400">"${f.motivo}"</div>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" onclick="decidirFerias('${f.id}','${f.membroId}',true)" class="px-3 py-1 bg-emerald-600 text-white font-bold rounded-lg">Aprovar</button>
+            <button type="button" onclick="decidirFerias('${f.id}','${f.membroId}',false)" class="px-3 py-1 bg-red-600 text-white font-bold rounded-lg">Rejeitar</button>
+          </div>
+        </div>
+      `).join('') || '<p class="text-xs text-slate-500">Sem pedidos pendentes.</p>';
+    }
+
+    window.decidirFerias = async function(feriasId, membroId, aprovar) {
+      if (modoAcesso !== 'comando') return;
+      const m = membros.find(x => x.id === membroId);
+      if (firebaseConfigValido) {
+        try {
+          await updateDoc(doc(db, 'ferias', feriasId), { status: aprovar ? 'APROVADO' : 'REJEITADO' });
+          if (aprovar) {
+            const hoje = hojeIsoLocal();
+            await updateDoc(doc(db, 'membros', membroId), {
+              boxes: ['azul','azul','azul','azul','azul'],
+              slotDatas: { 0: hoje, 1: hoje, 2: hoje, 3: hoje, 4: hoje }
+            });
+          }
+        } catch (e) {}
+      }
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId,
+        nome: m?.nome || membroId,
+        patente: m?.patente || '',
+        token: m?.tokenAcesso || '',
+        acao: `${aprovar ? 'Aprovou' : 'Rejeitou'} pedido de férias (${usuarioLogado.nome})`,
+        detalhes: aprovar ? 'Slots marcados em férias (🔵)' : 'Pedido recusado pelo Comando'
+      });
+      showToast(aprovar ? "Férias aprovadas!" : "Pedido rejeitado.");
+    };
+
+    // CENTRAL DE AVISOS
+    window.publicarAvisoFirestore = async function(e) {
+      e.preventDefault();
+      if (modoAcesso !== 'comando') return;
+      const titulo = document.getElementById('aviso-titulo').value.trim();
+      const categoria = document.getElementById('aviso-categoria').value;
+      const mensagem = document.getElementById('aviso-mensagem').value.trim();
+
+      if (firebaseConfigValido) {
+        try {
+          await addDoc(collection(db, 'avisos'), {
+            corporacao: corpAtual,
+            titulo,
+            categoria,
+            mensagem,
+            autor: usuarioLogado.nome,
+            criadoEm: serverTimestamp()
+          });
+        } catch (err) {}
+      }
+
+      await registrarEventoAuditoria({
+        corp: corpAtual,
+        categoria: 'ATIVIDADE',
+        membroId: 'admin',
+        nome: usuarioLogado.nome,
+        patente: 'COMANDO',
+        acao: `Publicou aviso [${categoria}]: ${titulo}`,
+        detalhes: mensagem
+      });
+
+      e.target.reset();
+      showToast("Aviso publicado!");
+    };
+
+    function renderizarAvisos(lista) {
+      document.getElementById('lista-avisos-firestore').innerHTML = lista.map(a => `
+        <div class="p-3.5 rounded-xl bg-slate-950 border ${a.categoria === 'Urgente' ? 'border-red-500/40' : 'border-slate-800'} space-y-1">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-white text-xs">[${a.categoria}] ${a.titulo}</span>
+            ${modoAcesso === 'comando' ? `<button type="button" onclick="excluirAviso('${a.id}')" class="text-[11px] text-red-400">Excluir</button>` : ''}
+          </div>
+          <p class="text-xs text-slate-300">${a.mensagem}</p>
+        </div>
+      `).join('') || '<p class="text-xs text-slate-500">Nenhum aviso publicado.</p>';
+    }
+
+    window.excluirAviso = async function(id) {
+      if (firebaseConfigValido) {
+        try { await deleteDoc(doc(db, 'avisos', id)); } catch (e) {}
+      }
+    };
+
+    // NAVEGAÇÃO E TOAST
+    window.switchTab = function(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('theme-btn-primary');
+        b.classList.add('text-slate-400');
+      });
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const btn = document.getElementById(`tab-btn-${tabId}`);
+      if (btn) {
+        btn.classList.add('theme-btn-primary');
+        btn.classList.remove('text-slate-400');
+      }
+      if (tabId === 'efetivo' && modoAcesso === 'comando') inicializarDatasPeriodoPadrao();
+      if (tabId === 'desempenho') renderizarDesempenhoGeral();
+      if (tabId === 'ponto') {
+        renderizarCincoBotoesTurnoHP();
+        atualizarInterfaceTimerHP();
+        renderizarPainelPonto(mesclarPontosAtivosComLocal(), historicoLocalEncerrados);
+      }
+      if (tabId === 'candidatos') renderizarCandidatos();
+      if (tabId === 'auditoria') renderizarAuditoria();
+    };
+
+    window.showToast = function(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3500);
+    };
+
+    lucide.createIcons();
+    preencherSelectsCorporacao();
+    atualizarVisibilidadePortal();
+    renderizarAuditoria();
+    if (modoAcesso && usuarioLogado) iniciarSistemaLogado();
+  </script>
+</body>
+</html>
